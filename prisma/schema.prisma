@@ -1,0 +1,280 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// ============================================================
+// ENUM
+// ============================================================
+
+enum Role {
+  ADMIN
+  GURU
+  PROKTOR
+  PESERTA
+}
+
+enum GradeLevel {
+  X
+  XI
+  XII
+}
+
+enum QuestionType {
+  PG
+  PG_MULTI
+  ESSAY
+}
+
+enum ScheduleStatus {
+  DRAFT
+  AKTIF
+  SELESAI
+}
+
+enum ParticipantStatus {
+  BELUM_MULAI
+  SEDANG_UJIAN
+  SELESAI
+  DIHENTIKAN
+}
+
+enum ViolationType {
+  PINDAH_TAB
+  KEMBALI_KE_TAB
+  COPY_PASTE
+}
+
+enum ViolationLevel {
+  PERINGATAN
+  PELANGGARAN
+}
+
+// ============================================================
+// USER & AUTH
+// ============================================================
+
+model User {
+  id           String      @id @default(cuid())
+  username     String      @unique
+  passwordHash String
+  passwordPlain String?    
+  role         Role
+  nama         String
+  tanggalLahir DateTime?
+  gradeLevel   GradeLevel?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  guruAssignments   GuruAssignment[]
+  participants      ExamParticipant[]
+  auditLogs         AuditLog[]
+  resetLogins       ResetLogin[]      @relation("ResetByProktor")
+
+  @@index([role])
+  @@index([gradeLevel])
+}
+
+// ============================================================
+// MAPEL
+// ============================================================
+
+model Subject {
+  id        String   @id @default(cuid())
+  nama      String   @unique
+  createdAt DateTime @default(now())
+
+  schedules          ExamSchedule[]
+  guruAssignments    GuruAssignment[]
+}
+
+// ============================================================
+// ASSIGN GURU KE (MAPEL, KELAS)
+// ============================================================
+
+model GuruAssignment {
+  id         String     @id @default(cuid())
+  guruId     String
+  subjectId  String
+  gradeLevel GradeLevel
+
+  guru    User    @relation(fields: [guruId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([guruId, subjectId, gradeLevel])
+  @@index([subjectId, gradeLevel])
+}
+
+// ============================================================
+// JADWAL UJIAN
+// ============================================================
+
+model ExamSchedule {
+  id              String         @id @default(cuid())
+  subjectId       String
+  gradeLevel      GradeLevel
+  waktuMulai      DateTime
+  waktuSelesai    DateTime
+  token           String
+  tokenDirilis    Boolean        @default(false)
+  status          ScheduleStatus @default(DRAFT)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  subject     Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  participants ExamParticipant[]
+
+  @@index([gradeLevel, waktuMulai])
+  @@index([status])
+}
+
+// ============================================================
+// SOAL
+// ============================================================
+
+model Question {
+  id         String       @id @default(cuid())
+  scheduleId String
+  tipe       QuestionType
+  teks       String       @db.Text
+  gambarUrl  String?
+  kunciEssay String?      @db.Text  // <-- KUNCI JAWABAN ESSAY
+  poin       Int          @default(1)
+  urutan     Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  schedule ExamSchedule     @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  options  QuestionOption[]
+  answers  Answer[]
+
+  @@index([scheduleId])
+}
+
+model QuestionOption {
+  id         String  @id @default(cuid())
+  questionId String
+  teks       String  @db.Text
+  isCorrect  Boolean @default(false)
+  urutan     Int     @default(0)
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+// ============================================================
+// PESERTA PER JADWAL
+// ============================================================
+
+model ExamParticipant {
+  id          String            @id @default(cuid())
+  userId      String
+  scheduleId  String
+  status      ParticipantStatus @default(BELUM_MULAI)
+  waktuMulai  DateTime?
+  waktuSelesai DateTime?
+  skor        Float?
+  seedAcak    String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule ExamSchedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  answers  Answer[]
+  violations Violation[]
+
+  @@unique([userId, scheduleId])
+  @@index([scheduleId, status])
+  @@index([userId])
+}
+
+// ============================================================
+// JAWABAN
+// ============================================================
+
+model Answer {
+  id            String  @id @default(cuid())
+  participantId String
+  questionId    String
+  jawaban       String  @db.Text
+  isCorrect     Boolean?
+  nilaiEssay    Float?
+  komentarGuru  String? @db.Text
+  updatedAt     DateTime @updatedAt
+
+  participant ExamParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  question    Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, questionId])
+  @@index([participantId])
+}
+
+// ============================================================
+// PELANGGARAN
+// ============================================================
+
+model Violation {
+  id            String         @id @default(cuid())
+  participantId String
+  scheduleId    String
+  tipe          ViolationType
+  level         ViolationLevel
+  detail        String?        @db.Text
+  createdAt     DateTime       @default(now())
+
+  participant ExamParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([participantId, createdAt])
+  @@index([scheduleId, createdAt])
+}
+
+// ============================================================
+// RESET LOGIN
+// ============================================================
+
+model ResetLogin {
+  id            String   @id @default(cuid())
+  userId        String
+  scheduleId    String
+  resetById     String
+  alasan        String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  user    User @relation("ResetByProktor", fields: [resetById], references: [id], onDelete: Cascade)
+
+  @@index([userId, scheduleId])
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  aksi      String
+  detail    String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// ============================================================
+// PENGATURAN SISTEM
+// ============================================================
+
+model Setting {
+  id                  String   @id @default("global")
+  maxPelanggaran      Int      @default(2)
+  updatedAt           DateTime @updatedAt
+}
