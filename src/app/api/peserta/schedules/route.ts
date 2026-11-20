@@ -9,27 +9,36 @@ export async function GET() {
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
     }
 
-    // Ambil data user untuk tahu kelasnya (X, XI, XII)
+    // Ambil data user (hanya field yang perlu)
     const user = await prisma.user.findUnique({
-      where: { id: session.userId }
+      where: { id: session.userId },
+      select: { gradeLevel: true }
     })
 
     if (!user) return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
 
-    // Ambil jadwal ujian khusus untuk kelas peserta ini
+    // Ambil jadwal ujian (Gunakan select untuk efisiensi)
     const schedules = await prisma.examSchedule.findMany({
       where: {
         gradeLevel: user.gradeLevel || 'X',
-        status: 'AKTIF' // Hanya ambil yang statusnya AKTIF (sudah diaktifkan admin)
+        status: 'AKTIF'
       },
-      include: {
-        subject: true
+      select: {
+        id: true,
+        gradeLevel: true,
+        waktuMulai: true,
+        waktuSelesai: true,
+        status: true,
+        subject: {
+          select: { nama: true }
+        }
       },
       orderBy: { waktuMulai: 'asc' }
     })
 
     return NextResponse.json({ schedules })
   } catch (error) {
+    console.error('GET Schedules error:', error)
     return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 })
   }
 }

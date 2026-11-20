@@ -12,25 +12,24 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { participantId, scheduleId, tipe, level } = body
 
-    // 1. Catat pelanggaran ke database
+    // 1. Catat pelanggaran
     await prisma.violation.create({
       data: { participantId, scheduleId, tipe, level }
     })
 
-    // 2. Jika yang masuk adalah PELANGGARAN (bukan peringatan), cek batasnya
+    // 2. Jika PELANGGARAN, cek batas
     if (level === 'PELANGGARAN') {
       const totalPelanggaran = await prisma.violation.count({
-        where: { 
-          participantId, 
-          level: 'PELANGGARAN' 
-        }
+        where: { participantId, level: 'PELANGGARAN' }
       })
 
-      // Ambil batas pelanggaran dari Pengaturan Admin
-      const setting = await prisma.setting.findUnique({ where: { id: 'global' } })
-      const batasPelanggaran = setting?.maxPelanggaran || 2 // Default 2 jika belum diatur
+      // Gunakan select untuk efisiensi
+      const setting = await prisma.setting.findUnique({ 
+        where: { id: 'global' },
+        select: { maxPelanggaran: true }
+      })
+      const batasPelanggaran = setting?.maxPelanggaran || 2
 
-      // Jika total pelanggaran sudah mencapai atau melebihi batas
       if (totalPelanggaran >= batasPelanggaran) {
         await prisma.examParticipant.update({
           where: { id: participantId },

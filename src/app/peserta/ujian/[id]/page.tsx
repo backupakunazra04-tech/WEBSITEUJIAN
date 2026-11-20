@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Key, Calendar, Clock, ShieldCheck, CheckCircle, ShieldAlert, List, WifiOff } from 'lucide-react'
+import { Key, Calendar, Clock, ShieldCheck, CheckCircle, ShieldAlert, List, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react'
 
 function UjianContent() {
   const params = useParams()
@@ -32,9 +32,16 @@ function UjianContent() {
   const [sisaWaktu, setSisaWaktu] = useState(0)
   const [skorAkhir, setSkorAkhir] = useState(0)
   
+  // State Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 8
+
   // State Anti-Curang & Koneksi
   const [isTabHidden, setIsTabHidden] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
+
+  // Ref untuk Debounce Auto-Save
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Deteksi Koneksi Internet
   useEffect(() => {
@@ -136,6 +143,10 @@ function UjianContent() {
       if (!konfirmasi) return
     }
 
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
     try {
       const res = await fetch('/api/peserta/ujian', {
         method: 'PUT',
@@ -213,25 +224,33 @@ function UjianContent() {
     }
   }, [isUjianDimulai, isSelesai, isDikunci])
 
-  // 6. Simpan Jawaban (Autosave dengan Cek Koneksi)
-  const handleJawab = async (questionId: string, val: string) => {
+  // 6. Simpan Jawaban (Autosave dengan Debounce 1.5 detik)
+  const handleJawab = (questionId: string, val: string) => {
     setJawaban(prev => ({ ...prev, [questionId]: val }))
+
     if (!navigator.onLine) {
       const draft = JSON.parse(localStorage.getItem('draft_jawaban') || '{}')
       draft[questionId] = val
       localStorage.setItem('draft_jawaban', JSON.stringify(draft))
       return
     }
-    fetch('/api/peserta/ujian', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ participantId, questionId, jawaban: val })
-    }).catch(err => {
-      console.error('Gagal autosave, menyimpan ke lokal', err)
-      const draft = JSON.parse(localStorage.getItem('draft_jawaban') || '{}')
-      draft[questionId] = val
-      localStorage.setItem('draft_jawaban', JSON.stringify(draft))
-    })
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      fetch('/api/peserta/ujian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantId, questionId, jawaban: val })
+      }).catch(err => {
+        console.error('Gagal autosave, menyimpan ke lokal', err)
+        const draft = JSON.parse(localStorage.getItem('draft_jawaban') || '{}')
+        draft[questionId] = val
+        localStorage.setItem('draft_jawaban', JSON.stringify(draft))
+      })
+    }, 1500)
   }
 
   // Sinkronisasi draft saat online kembali
@@ -345,6 +364,11 @@ function UjianContent() {
   }
 
   // ================= RENDER UJIAN =================
+  // Hitung soal untuk halaman saat ini
+  const totalPages = Math.ceil(questions.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const currentQuestions = questions.slice(startIndex, startIndex + itemsPerPage)
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
       {!isOnline && (
@@ -368,137 +392,157 @@ function UjianContent() {
       )}
       <div className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col lg:flex-row gap-6 mt-4">
         <div className="flex-1 space-y-6">
-          {questions.length === 0 ? (
+          {currentQuestions.length === 0 ? (
             <div className="bg-white p-12 rounded-2xl shadow-sm border border-slate-200 text-center text-slate-500">
               <ShieldAlert size={48} className="mx-auto text-amber-400 mb-4" />
               <h2 className="text-lg font-bold text-slate-800 mb-2">Soal Tidak Ditemukan</h2>
               <p>Guru belum memasukkan soal untuk ujian ini.</p>
             </div>
           ) : (
-            questions.map((q, idx) => (
-              <div key={q.id} id={`soal-${idx}`} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 scroll-mt-24">
-                <div className="flex gap-4">
-                  <span className="font-bold text-slate-400 text-lg">{idx + 1}.</span>
-                  <div className="flex-1">
-                    
-                    {/* STIMULUS (Hanya Muncul Jika Ada) */}
-                    {q.stimulus && (
-                      <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4 text-slate-800 whitespace-pre-wrap">
-                        <p className="text-sm font-bold text-blue-800 mb-2">Stimulus / Teks Bacaan:</p>
-                        {q.stimulus}
-                      </div>
-                    )}
-
-                    <p className="text-slate-800 text-lg mb-4 font-medium">{q.teks}</p>
-                    {q.gambarUrl && (
-                      <img src={q.gambarUrl} alt="Gambar Soal" className="max-h-64 rounded-lg mb-4 border object-contain" />
-                    )}
-
-                    <div className="space-y-3 mt-4">
-                      {q.tipe === 'ESSAY' ? (
-                        <div>
-                          <textarea
-                            rows={5}
-                            className="w-full border border-slate-300 rounded-xl p-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                            placeholder="Ketik jawaban essay kamu di sini..."
-                            value={jawaban[q.id] || ''}
-                            onChange={(e) => handleJawab(q.id, e.target.value)}
-                          />
+            currentQuestions.map((q, idx) => {
+              const globalIdx = startIndex + idx
+              return (
+                <div key={q.id} id={`soal-${globalIdx}`} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 scroll-mt-24">
+                  <div className="flex gap-4">
+                    <span className="font-bold text-slate-400 text-lg">{globalIdx + 1}.</span>
+                    <div className="flex-1">
+                      
+                      {q.stimulus && (
+                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4 text-slate-800 whitespace-pre-wrap">
+                          <p className="text-sm font-bold text-blue-800 mb-2">Stimulus / Teks Bacaan:</p>
+                          {q.stimulus}
                         </div>
-                      ) : q.tipe === 'BENAR_SALAH' ? (
-                        
-                        /* TAMPILAN TABEL BENAR SALAH */
-                        <div className="border border-slate-200 rounded-xl overflow-hidden">
-                          <div className="grid grid-cols-12 gap-2 bg-slate-100 p-3 text-sm font-bold text-slate-700">
-                            <div className="col-span-8">Pernyataan</div>
-                            <div className="col-span-2 text-center">Benar</div>
-                            <div className="col-span-2 text-center">Salah</div>
-                          </div>
-                          <div className="divide-y divide-slate-200">
-                            {q.options.map((opt: any) => {
-                              // Format jawaban untuk B/S: "optId:true,optId2:false"
-                              const currentAnswers = (jawaban[q.id] || '').split(',').filter(Boolean)
-                              const thisAnswer = currentAnswers.find((a: string) => a.startsWith(opt.id))
-                              const isBenar = thisAnswer?.endsWith(':true')
-                              const isSalah = thisAnswer?.endsWith(':false')
-
-                              return (
-                                <div key={opt.id} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-slate-50">
-                                  <div className="col-span-8 text-slate-800">
-                                    {opt.teks}
-                                    {opt.gambarUrl && (
-                                      <img src={opt.gambarUrl} alt="Gambar Pernyataan" className="mt-2 h-24 object-contain rounded border" />
-                                    )}
-                                  </div>
-                                  <div className="col-span-2 flex justify-center">
-                                    <input 
-                                      type="radio" 
-                                      name={`bs-${opt.id}`} 
-                                      checked={isBenar}
-                                      onChange={() => {
-                                        const others = currentAnswers.filter((a: string) => !a.startsWith(opt.id))
-                                        handleJawab(q.id, [...others, `${opt.id}:true`].join(','))
-                                      }}
-                                      className="w-6 h-6 accent-emerald-600 cursor-pointer"
-                                    />
-                                  </div>
-                                  <div className="col-span-2 flex justify-center">
-                                    <input 
-                                      type="radio" 
-                                      name={`bs-${opt.id}`} 
-                                      checked={isSalah}
-                                      onChange={() => {
-                                        const others = currentAnswers.filter((a: string) => !a.startsWith(opt.id))
-                                        handleJawab(q.id, [...others, `${opt.id}:false`].join(','))
-                                      }}
-                                      className="w-6 h-6 accent-red-600 cursor-pointer"
-                                    />
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                      ) : (
-                        
-                        /* TAMPILAN PG & PG MULTI */
-                        q.options.map((opt: any) => (
-                          <label key={opt.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
-                            <input 
-                              type={q.tipe === 'PG' ? 'radio' : 'checkbox'} 
-                              name={`q-${q.id}`}
-                              value={opt.id}
-                              checked={q.tipe === 'PG_MULTI' 
-                                ? (jawaban[q.id] || '').split(',').includes(opt.id)
-                                : jawaban[q.id] === opt.id
-                              }
-                              onChange={(e) => {
-                                if (q.tipe === 'PG') {
-                                  handleJawab(q.id, opt.id)
-                                } else {
-                                  let current = (jawaban[q.id] || '').split(',').filter(Boolean)
-                                  if (e.target.checked) current.push(opt.id)
-                                  else current = current.filter(id => id !== opt.id)
-                                  handleJawab(q.id, current.join(','))
-                                }
-                              }}
-                              className="w-5 h-5 mt-1 accent-emerald-600"
-                            />
-                            <div className="flex-1">
-                              <span className="text-slate-700">{opt.teks}</span>
-                              {opt.gambarUrl && (
-                                <img src={opt.gambarUrl} alt="Gambar Pilihan" className="mt-2 h-32 object-contain rounded border" />
-                              )}
-                            </div>
-                          </label>
-                        ))
                       )}
+
+                      <p className="text-slate-800 text-lg mb-4 font-medium">{q.teks}</p>
+                      {q.gambarUrl && (
+                        <img src={q.gambarUrl} alt="Gambar Soal" className="max-h-64 rounded-lg mb-4 border object-contain" />
+                      )}
+
+                      <div className="space-y-3 mt-4">
+                        {q.tipe === 'ESSAY' ? (
+                          <div>
+                            <textarea
+                              rows={5}
+                              className="w-full border border-slate-300 rounded-xl p-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                              placeholder="Ketik jawaban essay kamu di sini..."
+                              value={jawaban[q.id] || ''}
+                              onChange={(e) => handleJawab(q.id, e.target.value)}
+                            />
+                          </div>
+                        ) : q.tipe === 'BENAR_SALAH' ? (
+                          
+                          <div className="border border-slate-200 rounded-xl overflow-hidden">
+                            <div className="grid grid-cols-12 gap-2 bg-slate-100 p-3 text-sm font-bold text-slate-700">
+                              <div className="col-span-8">Pernyataan</div>
+                              <div className="col-span-2 text-center">Benar</div>
+                              <div className="col-span-2 text-center">Salah</div>
+                            </div>
+                            <div className="divide-y divide-slate-200">
+                              {q.options.map((opt: any) => {
+                                const currentAnswers = (jawaban[q.id] || '').split(',').filter(Boolean)
+                                const thisAnswer = currentAnswers.find((a: string) => a.startsWith(opt.id))
+                                const isBenar = thisAnswer?.endsWith(':true')
+                                const isSalah = thisAnswer?.endsWith(':false')
+
+                                return (
+                                  <div key={opt.id} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-slate-50">
+                                    <div className="col-span-8 text-slate-800">
+                                      {opt.teks}
+                                      {opt.gambarUrl && (
+                                        <img src={opt.gambarUrl} alt="Gambar Pernyataan" className="mt-2 h-24 object-contain rounded border" />
+                                      )}
+                                    </div>
+                                    <div className="col-span-2 flex justify-center">
+                                      <input 
+                                        type="radio" 
+                                        name={`bs-${opt.id}`} 
+                                        checked={isBenar}
+                                        onChange={() => {
+                                          const others = currentAnswers.filter((a: string) => !a.startsWith(opt.id))
+                                          handleJawab(q.id, [...others, `${opt.id}:true`].join(','))
+                                        }}
+                                        className="w-6 h-6 accent-emerald-600 cursor-pointer"
+                                      />
+                                    </div>
+                                    <div className="col-span-2 flex justify-center">
+                                      <input 
+                                        type="radio" 
+                                        name={`bs-${opt.id}`} 
+                                        checked={isSalah}
+                                        onChange={() => {
+                                          const others = currentAnswers.filter((a: string) => !a.startsWith(opt.id))
+                                          handleJawab(q.id, [...others, `${opt.id}:false`].join(','))
+                                        }}
+                                        className="w-6 h-6 accent-red-600 cursor-pointer"
+                                      />
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                        ) : (
+                          
+                          q.options.map((opt: any) => (
+                            <label key={opt.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                              <input 
+                                type={q.tipe === 'PG' ? 'radio' : 'checkbox'} 
+                                name={`q-${q.id}`}
+                                value={opt.id}
+                                checked={q.tipe === 'PG_MULTI' 
+                                  ? (jawaban[q.id] || '').split(',').includes(opt.id)
+                                  : jawaban[q.id] === opt.id
+                                }
+                                onChange={(e) => {
+                                  if (q.tipe === 'PG') {
+                                    handleJawab(q.id, opt.id)
+                                  } else {
+                                    let current = (jawaban[q.id] || '').split(',').filter(Boolean)
+                                    if (e.target.checked) current.push(opt.id)
+                                    else current = current.filter(id => id !== opt.id)
+                                    handleJawab(q.id, current.join(','))
+                                  }
+                                }}
+                                className="w-5 h-5 mt-1 accent-emerald-600"
+                              />
+                              <div className="flex-1">
+                                <span className="text-slate-700">{opt.teks}</span>
+                                {opt.gambarUrl && (
+                                  <img src={opt.gambarUrl} alt="Gambar Pilihan" className="mt-2 h-32 object-contain rounded border" />
+                                )}
+                              </div>
+                            </label>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              )
+            })
+          )}
+
+          {/* Navigasi Halaman */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 py-4">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50"
+              >
+                <ChevronLeft size={18} /> Sebelumnya
+              </button>
+              <span className="text-sm font-medium text-slate-600">Halaman {currentPage} dari {totalPages}</span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50"
+              >
+                Selanjutnya <ChevronRight size={18} />
+              </button>
+            </div>
           )}
         </div>
         <div className="lg:w-72 w-full shrink-0">
@@ -510,7 +554,11 @@ function UjianContent() {
               {questions.map((q, idx) => {
                 const isDijawab = jawaban[q.id] && jawaban[q.id] !== ''
                 return (
-                  <button key={q.id} onClick={() => document.getElementById(`soal-${idx}`)?.scrollIntoView({ behavior: 'smooth' })}
+                  <button key={q.id} onClick={() => {
+                    const page = Math.floor(idx / itemsPerPage) + 1
+                    setCurrentPage(page)
+                    setTimeout(() => document.getElementById(`soal-${idx}`)?.scrollIntoView({ behavior: 'smooth' }), 100)
+                  }}
                     className={`w-full aspect-square flex items-center justify-center text-sm font-bold rounded-lg border transition-all ${
                       isDijawab ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-200'
                     }`}

@@ -9,21 +9,37 @@ export async function GET() {
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
     }
 
-    // Ambil semua ujian yang sudah diselesaikan (atau dihentikan) oleh siswa ini
+    // Ambil riwayat dengan select spesifik (hindari include berlapis)
     const riwayat = await prisma.examParticipant.findMany({
       where: {
         userId: session.userId,
         status: { in: ['SELESAI', 'DIHENTIKAN'] }
       },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        skor: true,
+        waktuSelesai: true,
         schedule: {
-          include: { subject: true }
+          select: {
+            subject: { select: { nama: true } }
+          }
         },
         answers: {
-          include: {
+          select: {
+            questionId: true,
+            jawaban: true,
+            isCorrect: true,
+            nilaiEssay: true,
+            komentarGuru: true,
             question: {
-              include: {
-                options: true // Ambil opsi untuk cek jawaban benar
+              select: {
+                tipe: true,
+                teks: true,
+                kunciEssay: true,
+                options: {
+                  select: { id: true, teks: true, isCorrect: true }
+                }
               }
             }
           }
@@ -32,7 +48,6 @@ export async function GET() {
       orderBy: { waktuSelesai: 'desc' }
     })
 
-    // Format data agar aman dikirim ke frontend (sembunyikan isCorrect dari opsi yang tidak dipilih)
     const safeRiwayat = riwayat.map(r => {
       return {
         id: r.id,
@@ -41,9 +56,7 @@ export async function GET() {
         skor: r.skor,
         waktuSelesai: r.waktuSelesai,
         jawaban: r.answers.map(ans => {
-          // Cari opsi yang benar dari database
           const correctOption = ans.question.options.find(o => o.isCorrect)
-          
           return {
             questionId: ans.questionId,
             tipe: ans.question.tipe,

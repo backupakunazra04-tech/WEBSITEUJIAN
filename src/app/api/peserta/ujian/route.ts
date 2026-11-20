@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 
-// 1. Simpan Jawaban (Autosave)
+// 1. Simpan Jawaban (Autosave) - TIDAK BERUBAH, sudah efisien
 export async function POST(request: Request) {
   try {
     const session = await getSession()
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 }
 
-// 2. Selesai Ujian & Auto-Grade
+// 2. Selesai Ujian & Auto-Grade (SUDAH DIOPTIMALKAN)
 export async function PUT(request: Request) {
   try {
     const session = await getSession()
@@ -36,12 +36,27 @@ export async function PUT(request: Request) {
     const body = await request.json()
     const { participantId } = body
 
+    // Ambil jawaban dengan select spesifik untuk mengurangi data
     const answers = await prisma.answer.findMany({
       where: { participantId },
-      include: { question: { include: { options: true } } }
+      select: {
+        id: true,
+        jawaban: true,
+        nilaiEssay: true,
+        question: {
+          select: {
+            tipe: true,
+            poin: true,
+            options: {
+              select: { id: true, isCorrect: true }
+            }
+          }
+        }
+      }
     })
 
     let totalSkor = 0
+    const updates: { id: string, isCorrect: boolean }[] = []
 
     for (const ans of answers) {
       let isCorrect = false
@@ -62,29 +77,17 @@ export async function PUT(request: Request) {
         }
       }
       else if (ans.question.tipe === 'BENAR_SALAH') {
-        // Logika Penilaian Benar/Salah
-        // Format jawaban siswa: "optId1:true,optId2:false"
         const studentAnswers = (ans.jawaban || '').split(',').filter(Boolean)
-        
         let allCorrect = true
         let totalPernyataan = 0
 
         for (const opt of ans.question.options) {
           totalPernyataan++
-          // Cari jawaban siswa untuk pernyataan ini
           const studentAnswer = studentAnswers.find(a => a.startsWith(opt.id))
-          
-          if (!studentAnswer) {
-            allCorrect = false; break; // Belum dijawab
-          }
-
+          if (!studentAnswer) { allCorrect = false; break; }
           const isStudentTrue = studentAnswer.endsWith(':true')
-          // Cocokkan dengan kunci di database (opt.isCorrect)
-          if (isStudentTrue !== opt.isCorrect) {
-            allCorrect = false; break; // Ada satu saja yang salah, maka salah semua (standar UTBK)
-          }
+          if (isStudentTrue !== opt.isCorrect) { allCorrect = false; break; }
         }
-
         if (allCorrect && totalPernyataan > 0) {
           isCorrect = true
           totalSkor += ans.question.poin
@@ -94,11 +97,19 @@ export async function PUT(request: Request) {
         totalSkor += (ans.nilaiEssay || 0)
       }
 
-      await prisma.answer.update({
-        where: { id: ans.id },
-        data: { isCorrect }
-      })
+      // Kumpulkan update, jangan eksekusi satu per satu
+      updates.push({ id: ans.id, isCorrect })
     }
+
+    // EKSEKUSI BATCH UPDATE (Jauh lebih cepat dari loop sequential)
+    await prisma.$transaction(
+      updates.map(u => 
+        prisma.answer.update({
+          where: { id: u.id },
+          data: { isCorrect: u.isCorrect }
+        })
+      )
+    )
 
     await prisma.examParticipant.update({
       where: { id: participantId },

@@ -13,16 +13,42 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { scheduleId, token, tanggalLahir } = body
 
-    // 1. Validasi Data Siswa
-    const user = await prisma.user.findUnique({ where: { id: session.userId } })
+    // 1. Validasi Data Siswa (Gunakan select untuk efisiensi)
+    const user = await prisma.user.findUnique({ 
+      where: { id: session.userId },
+      select: { id: true, tanggalLahir: true }
+    })
+    
     if (!user || user.tanggalLahir?.toISOString().split('T')[0] !== tanggalLahir) {
       return NextResponse.json({ error: 'Tanggal lahir tidak cocok' }, { status: 400 })
     }
 
-    // 2. Validasi Jadwal & Token
+    // 2. Validasi Jadwal & Token (Gunakan select untuk efisiensi)
     const schedule = await prisma.examSchedule.findUnique({
       where: { id: scheduleId },
-      include: { questions: { include: { options: true } } }
+      select: {
+        token: true,
+        waktuMulai: true,
+        waktuSelesai: true,
+        questions: {
+          select: {
+            id: true,
+            tipe: true,
+            stimulus: true,
+            teks: true,
+            gambarUrl: true,
+            poin: true,
+            options: {
+              select: {
+                id: true,
+                teks: true,
+                gambarUrl: true,
+                isCorrect: true // Tetap diambil untuk penilaian, tapi tidak dikirim ke frontend
+              }
+            }
+          }
+        }
+      }
     })
 
     if (!schedule) return NextResponse.json({ error: 'Jadwal tidak ditemukan' }, { status: 404 })
@@ -35,10 +61,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ujian belum dimulai atau sudah berakhir' }, { status: 400 })
     }
 
-    // 3. Cek Status Keikutsertaan Siswa
+    // 3. Cek Status Keikutsertaan Siswa (Gunakan select untuk efisiensi)
     let participant = await prisma.examParticipant.findUnique({
       where: { userId_scheduleId: { userId: user.id, scheduleId } },
-      include: { answers: true }
+      select: { 
+        id: true, 
+        status: true, 
+        seedAcak: true,
+        answers: {
+          select: {
+            questionId: true,
+            jawaban: true
+          }
+        }
+      }
     })
 
     if (participant?.status === 'SELESAI') {
@@ -57,25 +93,30 @@ export async function POST(request: Request) {
           waktuMulai: now,
           seedAcak: user.id
         },
-        include: { answers: true }
+        select: { 
+          id: true, 
+          status: true, 
+          seedAcak: true,
+          answers: { select: { questionId: true, jawaban: true } }
+        }
       })
     }
 
     // 4. Acak Soal & Opsi Jawaban
     const shuffledQuestions = seededShuffle(schedule.questions, participant.seedAcak)
     
-    // 5. Sembunyikan kunci & Kirim data yang diperlukan (Termasuk Stimulus & Gambar)
+    // 5. Sembunyikan kunci & Kirim data yang diperlukan
     const safeQuestions = shuffledQuestions.map((q: any) => ({
       id: q.id,
       tipe: q.tipe,
-      stimulus: q.stimulus, // <-- Kirim Stimulus
+      stimulus: q.stimulus,
       teks: q.teks,
       gambarUrl: q.gambarUrl,
       poin: q.poin,
       options: seededShuffle(q.options, participant!.seedAcak + q.id).map((o: any) => ({
         id: o.id,
         teks: o.teks,
-        gambarUrl: o.gambarUrl // <-- Kirim Gambar Pilihan
+        gambarUrl: o.gambarUrl
       }))
     }))
 
