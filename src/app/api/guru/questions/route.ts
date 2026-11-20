@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 
-// 1. Ambil soal
+// 1. Ambil soal berdasarkan ID Jadwal
 export async function GET(request: Request) {
   try {
     const session = await getSession()
@@ -19,17 +19,20 @@ export async function GET(request: Request) {
 
     const questions = await prisma.question.findMany({
       where: { scheduleId },
-      include: { options: true },
+      include: {
+        options: true
+      },
       orderBy: { urutan: 'asc' }
     })
 
     return NextResponse.json({ questions })
   } catch (error) {
+    console.error("GET Questions Error:", error)
     return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 })
   }
 }
 
-// 2. Tambah Soal
+// 2. Tambah Soal Baru
 export async function POST(request: Request) {
   try {
     const session = await getSession()
@@ -44,13 +47,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
     }
 
-    const countSoal = await prisma.question.count({ where: { scheduleId } })
+    const countSoal = await prisma.question.count({
+      where: { scheduleId }
+    })
 
     const newQuestion = await prisma.question.create({
       data: {
         scheduleId,
         tipe,
-        stimulus: stimulus || null, // Simpan stimulus
+        stimulus: stimulus || null, // Simpan stimulus (teks bacaan)
         teks,
         gambarUrl: gambarUrl || null,
         kunciEssay: kunciEssay || null, 
@@ -83,17 +88,22 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url)
     const questionId = searchParams.get('id')
 
-    if (!questionId) return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
+    if (!questionId) {
+      return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
+    }
 
-    await prisma.question.delete({ where: { id: questionId } })
+    await prisma.question.delete({
+      where: { id: questionId }
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Hapus soal error:', error)
     return NextResponse.json({ error: 'Gagal menghapus soal' }, { status: 500 })
   }
 }
 
-// 4. Edit Soal
+// 4. Update Soal (Edit)
 export async function PUT(request: Request) {
   try {
     const session = await getSession()
@@ -104,11 +114,18 @@ export async function PUT(request: Request) {
     const body = await request.json()
     const { id, tipe, stimulus, teks, gambarUrl, kunciEssay, poin, options } = body
 
-    if (!id) return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
+    if (!id) {
+      return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
+    }
 
+    // Gunakan transaksi untuk menghapus opsi lama dan membuat opsi baru
     const updatedQuestion = await prisma.$transaction(async (tx) => {
-      await tx.questionOption.deleteMany({ where: { questionId: id } })
+      // Hapus opsi lama
+      await tx.questionOption.deleteMany({
+        where: { questionId: id }
+      })
 
+      // Update soal dan buat opsi baru
       return tx.question.update({
         where: { id },
         data: {

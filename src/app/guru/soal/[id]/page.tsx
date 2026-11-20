@@ -2,8 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useParams } from 'next/navigation'
+import * as XLSX from 'xlsx'
 import { 
-  Plus, Trash2, ArrowLeft, Save, Pencil, Image as ImageIcon
+  Plus, Trash2, ArrowLeft, Image as ImageIcon, Save, Upload, Download, Pencil 
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -28,7 +29,7 @@ function BuatSoalContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  // State Form
+  // State Form Soal
   const [editingId, setEditingId] = useState<string | null>(null)
   const [tipe, setTipe] = useState('PG')
   const [stimulus, setStimulus] = useState('')
@@ -154,12 +155,14 @@ function BuatSoalContent() {
   }
 
   const handleHapusSoal = async (questionId: string) => {
-    if (!window.confirm('Yakin ingin menghapus soal ini?')) return
+    if (!window.confirm('Apakah kamu yakin ingin menghapus soal ini?')) return
     try {
       const res = await fetch(`/api/guru/questions?id=${questionId}`, { method: 'DELETE' })
       if (res.ok) {
         fetchQuestions()
         if (editingId === questionId) resetForm()
+      } else {
+        alert('Gagal menghapus soal')
       }
     } catch (error) { console.error(error) }
   }
@@ -176,21 +179,208 @@ function BuatSoalContent() {
     setOptions(q.options.map(o => ({ teks: o.teks, isCorrect: o.isCorrect })))
   }
 
+  // ==========================================
+  // DOWNLOAD TEMPLATE EXCEL (DIPERBARUI)
+  // ==========================================
+  const downloadTemplateExcel = () => {
+    // Sheet 1: Panduan
+    const panduanData = [
+      { Petunjuk: '1. Untuk tipe PG, isi Pilihan A-D. Kolom "Kunci PG" isi dengan huruf jawaban benar (contoh: A).' },
+      { Petunjuk: '2. Untuk tipe BENAR_SALAH, isi Pernyataan 1-4 (boleh kurang).' },
+      { Petunjuk: '3. Kolom "Kunci B/S" isi dengan angka 1 (Benar) atau 0 (Salah).' },
+      { Petunjuk: '4. Jika ada 3 pernyataan, isi misal: 1, 0, 1 (Pernyataan 1 Benar, Pernyataan 2 Salah, Pernyataan 3 Benar).' }
+    ]
+    const wsPanduan = XLSX.utils.json_to_sheet(panduanData)
+    wsPanduan['!cols'] = [{ wpx: 600 }]
+
+    // Sheet 2: Data Soal
+    const templateData = [
+      {
+        Tipe: 'PG',
+        Stimulus: '',
+        Pertanyaan: 'Ibu kota Indonesia adalah...',
+        'Pilihan A': 'Jakarta',
+        'Pilihan B': 'Bandung',
+        'Pilihan C': 'Surabaya',
+        'Pilihan D': 'Medan',
+        'Kunci PG': 'A',
+        'Pernyataan 1': '',
+        'Pernyataan 2': '',
+        'Pernyataan 3': '',
+        'Pernyataan 4': '',
+        'Kunci B/S': '',
+        Poin: 1
+      },
+      {
+        Tipe: 'BENAR_SALAH',
+        Stimulus: 'Sebuah bengkel otomotif sedang melakukan perbaikan...',
+        Pertanyaan: 'Tentukan Benar atau Salah untuk setiap pernyataan berikut!',
+        'Pilihan A': '',
+        'Pilihan B': '',
+        'Pilihan C': '',
+        'Pilihan D': '',
+        'Kunci PG': '',
+        'Pernyataan 1': 'Apabila baut yang mau didorkan sedikit aus, gunakan kunci sok tipe bintang.',
+        'Pernyataan 2': 'Impact wrench sebaiknya disetel pada kecepatan maksimum.',
+        'Pernyataan 3': 'Kunci yang paling aman untuk baut/mur adalah ring.',
+        'Pernyataan 4': '',
+        'Kunci B/S': '0, 0, 1', // Contoh: Salah, Salah, Benar
+        Poin: 2
+      }
+    ]
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData)
+    worksheet['!cols'] = [
+      { wpx: 100 }, { wpx: 300 }, { wpx: 300 }, 
+      { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 80 },
+      { wpx: 250 }, { wpx: 250 }, { wpx: 250 }, { wpx: 250 }, { wpx: 100 },
+      { wpx: 50 }
+    ]
+
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, wsPanduan, 'Panduan')
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Soal')
+    XLSX.writeFile(workbook, 'Template_Import_Soal_Lengkap.xlsx')
+  }
+
+  // ==========================================
+  // IMPORT EXCEL (DIPERBARUI)
+  // ==========================================
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer)
+        const workbook = XLSX.read(data, { type: 'array' })
+        
+        // Pastikan membaca sheet "Data Soal" jika ada, jika tidak ambil sheet pertama
+        const sheetName = workbook.SheetNames.includes('Data Soal') ? 'Data Soal' : workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[sheetName]
+        
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[]
+
+        if (jsonData.length === 0) {
+          alert('File Excel kosong atau format tidak sesuai.')
+          return
+        }
+
+        setIsSubmitting(true)
+        let successCount = 0
+        
+        for (const row of jsonData) {
+          const tipe = row['Tipe'] || 'PG'
+          const stimulus = row['Stimulus'] || ''
+          const teks = row['Pertanyaan']
+          if (!teks) continue 
+
+          const options = []
+
+          if (tipe === 'PG' || tipe === 'PG_MULTI') {
+            const kunciPG = (row['Kunci PG'] || '').toUpperCase()
+            const opts = ['A', 'B', 'C', 'D']
+            for (const opt of opts) {
+              const teksOpsi = row[`Pilihan ${opt}`]
+              if (teksOpsi) {
+                options.push({
+                  teks: teksOpsi,
+                  isCorrect: kunciPG.includes(opt) 
+                })
+              }
+            }
+          } else if (tipe === 'BENAR_SALAH') {
+            // Pisahkan kunci berdasarkan koma, misal: "1, 0, 1" menjadi ["1", "0", "1"]
+            const kunciArray = (row['Kunci B/S'] || '').toString().split(',').map((s: string) => s.trim())
+            
+            const pernyataanKeys = ['Pernyataan 1', 'Pernyataan 2', 'Pernyataan 3', 'Pernyataan 4']
+            pernyataanKeys.forEach((key, index) => {
+              const teksPernyataan = row[key]
+              if (teksPernyataan) {
+                options.push({
+                  teks: teksPernyataan,
+                  // Jika kunciArray[index] adalah '1', maka Benar (true). Selain itu Salah (false)
+                  isCorrect: kunciArray[index] === '1'
+                })
+              }
+            })
+          }
+
+          if (options.length > 0 || tipe === 'ESSAY') {
+            await fetch('/api/guru/questions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                scheduleId,
+                tipe,
+                stimulus,
+                teks,
+                gambarUrl: '', 
+                kunciEssay: '', 
+                poin: row['Poin'] || 1,
+                options
+              })
+            })
+            successCount++
+          }
+        }
+        
+        alert(`Berhasil mengimport ${successCount} soal!`)
+        fetchQuestions() 
+      } catch (err) {
+        console.error(err)
+        alert('Gagal memproses file Excel. Pastikan format sesuai.')
+      } finally {
+        setIsSubmitting(false)
+        e.target.value = '' 
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="mb-8 flex items-center gap-4">
-        <Link href="/guru/dashboard" className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-          <ArrowLeft size={20} className="text-slate-600" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Kelola Soal Ujian</h1>
-          <p className="text-sm text-slate-500 mt-1">Tambahkan soal untuk ujian ini.</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/guru/dashboard" className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+            <ArrowLeft size={20} className="text-slate-600" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Kelola Soal Ujian</h1>
+            <p className="text-sm text-slate-500 mt-1">Tambahkan soal untuk ujian ini.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={downloadTemplateExcel}
+            type="button"
+            className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg font-medium shadow-sm transition-all"
+          >
+            <Download size={18} /> Template
+          </button>
+
+          <div>
+            <input 
+              type="file" 
+              accept=".xlsx, .xls, .csv" 
+              id="import-excel" 
+              className="hidden" 
+              onChange={handleImportExcel} 
+            />
+            <label 
+              htmlFor="import-excel" 
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all cursor-pointer"
+            >
+              <Upload size={18} /> Import Excel
+            </label>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* FORM KIRI */}
         <div className="lg:col-span-2">
           <div className={`bg-white p-6 rounded-2xl border shadow-sm transition-colors ${editingId ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200'}`}>
             <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
@@ -216,7 +406,7 @@ function BuatSoalContent() {
                 </label>
               </div>
 
-              {/* Stimulus (Hanya muncul jika Benar/Salah) */}
+              {/* Stimulus (Hanya untuk Benar/Salah) */}
               {tipe === 'BENAR_SALAH' && (
                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
                   <label className="block text-sm font-bold text-blue-800 mb-2">Stimulus / Teks Bacaan</label>
@@ -226,12 +416,12 @@ function BuatSoalContent() {
                     value={stimulus}
                     onChange={(e) => setStimulus(e.target.value)}
                     className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 bg-white"
-                    placeholder="Contoh: Sebuah bengkel otomotif sedang melakukan perbaikan besar pada area kaki-kaki..."
+                    placeholder="Contoh: Sebuah bengkel otomotif sedang melakukan perbaikan besar..."
                   />
                 </div>
               )}
 
-              {/* Teks Pertanyaan */}
+              {/* Teks Soal */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   {tipe === 'BENAR_SALAH' ? 'Instruksi Pertanyaan' : 'Pertanyaan'}
@@ -246,7 +436,6 @@ function BuatSoalContent() {
                 />
               </div>
 
-              {/* Kunci Essay */}
               {tipe === 'ESSAY' && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Kunci Jawaban / Rubrik (Opsional)</label>
