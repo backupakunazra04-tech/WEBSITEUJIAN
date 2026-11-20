@@ -38,15 +38,11 @@ function UjianContent() {
 
   // Deteksi Koneksi Internet
   useEffect(() => {
-    // Cek status awal
     setIsOnline(navigator.onLine)
-
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
-
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
@@ -77,24 +73,19 @@ function UjianContent() {
   // 2. Logika Hitung Mundur
   useEffect(() => {
     if (!waktuMulai) return
-
     const interval = setInterval(() => {
       const now = new Date().getTime()
       const distance = waktuMulai.getTime() - now
-
       if (distance < 0) {
         clearInterval(interval)
         setCountdown('')
         return
       }
-
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
       const seconds = Math.floor((distance % (1000 * 60)) / 1000)
-
       setCountdown(`${hours}j ${minutes}m ${seconds}d`)
     }, 1000)
-
     return () => clearInterval(interval)
   }, [waktuMulai])
 
@@ -156,7 +147,6 @@ function UjianContent() {
       if (res.ok && data.skor !== undefined) {
         setSkorAkhir(data.skor)
       }
-      
       setIsSelesai(true)
     } catch (error) {
       alert('Gagal menyelesaikan ujian. Periksa koneksi internet.')
@@ -166,7 +156,6 @@ function UjianContent() {
   // 3. Timer Ujian & Auto-Submit
   useEffect(() => {
     if (!isUjianDimulai || isSelesai || isDikunci || sisaWaktu <= 0) return
-    
     const timer = setInterval(() => {
       setSisaWaktu(prev => {
         if (prev <= 1000) {
@@ -177,14 +166,12 @@ function UjianContent() {
         return prev - 1000
       })
     }, 1000)
-    
     return () => clearInterval(timer)
   }, [isUjianDimulai, isSelesai, isDikunci, sisaWaktu])
 
   // 4. Fitur Anti-Curang (Tab Switch)
   useEffect(() => {
     if (!isUjianDimulai || isSelesai || isDikunci) return
-
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsTabHidden(true)
@@ -207,7 +194,6 @@ function UjianContent() {
         }).catch(err => console.error(err))
       }
     }
-
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [isUjianDimulai, isSelesai, isDikunci, participantId, scheduleId])
@@ -229,25 +215,19 @@ function UjianContent() {
 
   // 6. Simpan Jawaban (Autosave dengan Cek Koneksi)
   const handleJawab = async (questionId: string, val: string) => {
-    // Selalu update state lokal dulu
     setJawaban(prev => ({ ...prev, [questionId]: val }))
-
-    // Jika offline, simpan ke localStorage sementara
     if (!navigator.onLine) {
       const draft = JSON.parse(localStorage.getItem('draft_jawaban') || '{}')
       draft[questionId] = val
       localStorage.setItem('draft_jawaban', JSON.stringify(draft))
       return
     }
-
-    // Jika online, kirim ke server
     fetch('/api/peserta/ujian', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ participantId, questionId, jawaban: val })
     }).catch(err => {
       console.error('Gagal autosave, menyimpan ke lokal', err)
-      // Fallback jika tiba-tiba putus di tengah jalan
       const draft = JSON.parse(localStorage.getItem('draft_jawaban') || '{}')
       draft[questionId] = val
       localStorage.setItem('draft_jawaban', JSON.stringify(draft))
@@ -259,7 +239,6 @@ function UjianContent() {
     if (isOnline && isUjianDimulai) {
       const draft = JSON.parse(localStorage.getItem('draft_jawaban') || '{}')
       const draftKeys = Object.keys(draft)
-      
       if (draftKeys.length > 0) {
         draftKeys.forEach(qId => {
           fetch('/api/peserta/ujian', {
@@ -292,12 +271,7 @@ function UjianContent() {
           <h1 className="text-2xl font-bold text-red-600 mb-2">Ujian Dihentikan</h1>
           <p className="text-slate-600 text-sm mb-8">{pesanDikunci}</p>
           <p className="text-sm text-slate-500 mb-6">Hubungi Proktor untuk di-reset ulang.</p>
-          <button 
-            onClick={() => window.location.href = '/login'}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all"
-          >
-            Kembali ke Login
-          </button>
+          <button onClick={() => window.location.href = '/login'} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all">Kembali ke Login</button>
         </div>
       </div>
     )
@@ -313,19 +287,12 @@ function UjianContent() {
           </div>
           <h1 className="text-2xl font-bold text-slate-800 mb-2">Ujian Selesai!</h1>
           <p className="text-slate-500 text-sm mb-6">Jawabanmu sudah tersimpan di sistem.</p>
-          
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-8">
-            <p className="text-sm font-medium text-emerald-800 mb-1">Skor Sementara (PG):</p>
+            <p className="text-sm font-medium text-emerald-800 mb-1">Skor Sementara (PG & B/S):</p>
             <p className="text-4xl font-black text-emerald-600">{skorAkhir}</p>
             <p className="text-xs text-emerald-600/70 mt-2">*Nilai essay akan ditambahkan setelah dikoreksi guru.</p>
           </div>
-
-          <button 
-            onClick={() => router.push('/login')}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all"
-          >
-            Keluar
-          </button>
+          <button onClick={() => router.push('/login')} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all">Keluar</button>
         </div>
       </div>
     )
@@ -336,7 +303,6 @@ function UjianContent() {
     if (isFetchingJadwal) {
       return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>
     }
-
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
@@ -345,52 +311,30 @@ function UjianContent() {
           </div>
           <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">Konfirmasi Ujian</h1>
           <p className="text-center text-slate-500 text-sm mb-8">Masukkan data diri dan token dari proktor.</p>
-
           {countdown && (
             <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center mb-6">
               <p className="text-amber-800 font-medium text-sm mb-1">Ujian belum dimulai. Tunggu sebentar lagi:</p>
               <p className="text-3xl font-mono font-bold text-amber-600">{countdown}</p>
             </div>
           )}
-
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm border border-red-100">{error}</div>}
-
           {!countdown && (
             <form onSubmit={handleMulaiUjian} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Lahir</label>
                 <div className="relative">
                   <Calendar size={18} className="absolute left-3 top-3 text-slate-400" />
-                  <input 
-                    type="date" 
-                    required
-                    value={tanggalLahir}
-                    onChange={(e) => setTanggalLahir(e.target.value)}
-                    className="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <input type="date" required value={tanggalLahir} onChange={(e) => setTanggalLahir(e.target.value)} className="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Token Ujian</label>
                 <div className="relative">
                   <Key size={18} className="absolute left-3 top-3 text-slate-400" />
-                  <input 
-                    type="text" 
-                    required
-                    value={token}
-                    onChange={(e) => setToken(e.target.value.toUpperCase())}
-                    className="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="XXXXXX"
-                  />
+                  <input type="text" required value={token} onChange={(e) => setToken(e.target.value.toUpperCase())} className="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="XXXXXX" />
                 </div>
               </div>
-
-              <button 
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all mt-4 disabled:opacity-50"
-              >
+              <button type="submit" disabled={isLoading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all mt-4 disabled:opacity-50">
                 {isLoading ? 'Memvalidasi...' : 'Mulai Ujian'}
               </button>
             </form>
@@ -403,40 +347,26 @@ function UjianContent() {
   // ================= RENDER UJIAN =================
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
-      {/* Indikator Offline */}
       {!isOnline && (
         <div className="bg-amber-500 text-white text-center py-2 font-bold animate-pulse flex items-center justify-center gap-2">
           <WifiOff size={18} /> Koneksi Internet Terputus! Jawaban disimpan sementara di perangkat ini.
         </div>
       )}
-
-      {/* Header Timer */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
         <h1 className="font-bold text-lg text-slate-800">Ujian Online</h1>
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono font-bold border ${sisaWaktu < 300000 ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
             <Clock size={18} /> {formatWaktu(sisaWaktu)}
           </div>
-          <button 
-            onClick={() => handleSelesaiUjian(false)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            Selesai Ujian
-          </button>
+          <button onClick={() => handleSelesaiUjian(false)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">Selesai Ujian</button>
         </div>
       </header>
-
-      {/* Peringatan Pindah Tab */}
       {isTabHidden && (
         <div className="bg-red-600 text-white text-center py-2 font-bold animate-pulse fixed top-16 left-0 right-0 z-20">
           ⚠️ JANGAN PINDAH TAB! Pelanggaran sedang dicatat.
         </div>
       )}
-
-      {/* Layout Ujian: Kiri Soal, Kanan Navigasi */}
       <div className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col lg:flex-row gap-6 mt-4">
-        
-        {/* KOLOM KIRI: Daftar Soal */}
         <div className="flex-1 space-y-6">
           {questions.length === 0 ? (
             <div className="bg-white p-12 rounded-2xl shadow-sm border border-slate-200 text-center text-slate-500">
@@ -450,12 +380,21 @@ function UjianContent() {
                 <div className="flex gap-4">
                   <span className="font-bold text-slate-400 text-lg">{idx + 1}.</span>
                   <div className="flex-1">
-                    <p className="text-slate-800 text-lg mb-4">{q.teks}</p>
-                    {q.gambarUrl && (
-                      <img src={q.gambarUrl} alt="Gambar Soal" className="max-h-64 rounded-lg mb-4 border" />
+                    
+                    {/* STIMULUS (Hanya Muncul Jika Ada) */}
+                    {q.stimulus && (
+                      <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4 text-slate-800 whitespace-pre-wrap">
+                        <p className="text-sm font-bold text-blue-800 mb-2">Stimulus / Teks Bacaan:</p>
+                        {q.stimulus}
+                      </div>
                     )}
 
-                    <div className="space-y-3">
+                    <p className="text-slate-800 text-lg mb-4 font-medium">{q.teks}</p>
+                    {q.gambarUrl && (
+                      <img src={q.gambarUrl} alt="Gambar Soal" className="max-h-64 rounded-lg mb-4 border object-contain" />
+                    )}
+
+                    <div className="space-y-3 mt-4">
                       {q.tipe === 'ESSAY' ? (
                         <div>
                           <textarea
@@ -466,9 +405,66 @@ function UjianContent() {
                             onChange={(e) => handleJawab(q.id, e.target.value)}
                           />
                         </div>
+                      ) : q.tipe === 'BENAR_SALAH' ? (
+                        
+                        /* TAMPILAN TABEL BENAR SALAH */
+                        <div className="border border-slate-200 rounded-xl overflow-hidden">
+                          <div className="grid grid-cols-12 gap-2 bg-slate-100 p-3 text-sm font-bold text-slate-700">
+                            <div className="col-span-8">Pernyataan</div>
+                            <div className="col-span-2 text-center">Benar</div>
+                            <div className="col-span-2 text-center">Salah</div>
+                          </div>
+                          <div className="divide-y divide-slate-200">
+                            {q.options.map((opt: any) => {
+                              // Format jawaban untuk B/S: "optId:true,optId2:false"
+                              const currentAnswers = (jawaban[q.id] || '').split(',').filter(Boolean)
+                              const thisAnswer = currentAnswers.find((a: string) => a.startsWith(opt.id))
+                              const isBenar = thisAnswer?.endsWith(':true')
+                              const isSalah = thisAnswer?.endsWith(':false')
+
+                              return (
+                                <div key={opt.id} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-slate-50">
+                                  <div className="col-span-8 text-slate-800">
+                                    {opt.teks}
+                                    {opt.gambarUrl && (
+                                      <img src={opt.gambarUrl} alt="Gambar Pernyataan" className="mt-2 h-24 object-contain rounded border" />
+                                    )}
+                                  </div>
+                                  <div className="col-span-2 flex justify-center">
+                                    <input 
+                                      type="radio" 
+                                      name={`bs-${opt.id}`} 
+                                      checked={isBenar}
+                                      onChange={() => {
+                                        const others = currentAnswers.filter((a: string) => !a.startsWith(opt.id))
+                                        handleJawab(q.id, [...others, `${opt.id}:true`].join(','))
+                                      }}
+                                      className="w-6 h-6 accent-emerald-600 cursor-pointer"
+                                    />
+                                  </div>
+                                  <div className="col-span-2 flex justify-center">
+                                    <input 
+                                      type="radio" 
+                                      name={`bs-${opt.id}`} 
+                                      checked={isSalah}
+                                      onChange={() => {
+                                        const others = currentAnswers.filter((a: string) => !a.startsWith(opt.id))
+                                        handleJawab(q.id, [...others, `${opt.id}:false`].join(','))
+                                      }}
+                                      className="w-6 h-6 accent-red-600 cursor-pointer"
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+
                       ) : (
+                        
+                        /* TAMPILAN PG & PG MULTI */
                         q.options.map((opt: any) => (
-                          <label key={opt.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                          <label key={opt.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
                             <input 
                               type={q.tipe === 'PG' ? 'radio' : 'checkbox'} 
                               name={`q-${q.id}`}
@@ -487,9 +483,14 @@ function UjianContent() {
                                   handleJawab(q.id, current.join(','))
                                 }
                               }}
-                              className="w-5 h-5 accent-emerald-600"
+                              className="w-5 h-5 mt-1 accent-emerald-600"
                             />
-                            <span className="text-slate-700">{opt.teks}</span>
+                            <div className="flex-1">
+                              <span className="text-slate-700">{opt.teks}</span>
+                              {opt.gambarUrl && (
+                                <img src={opt.gambarUrl} alt="Gambar Pilihan" className="mt-2 h-32 object-contain rounded border" />
+                              )}
+                            </div>
                           </label>
                         ))
                       )}
@@ -500,25 +501,18 @@ function UjianContent() {
             ))
           )}
         </div>
-
-        {/* KOLOM KANAN: Navigasi Soal (Sticky) */}
         <div className="lg:w-72 w-full shrink-0">
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 sticky top-24">
             <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
               <List size={18} className="text-emerald-600" /> Navigasi Soal
             </h2>
-            
             <div className="grid grid-cols-5 gap-2 mb-6">
               {questions.map((q, idx) => {
                 const isDijawab = jawaban[q.id] && jawaban[q.id] !== ''
                 return (
-                  <button
-                    key={q.id}
-                    onClick={() => document.getElementById(`soal-${idx}`)?.scrollIntoView({ behavior: 'smooth' })}
+                  <button key={q.id} onClick={() => document.getElementById(`soal-${idx}`)?.scrollIntoView({ behavior: 'smooth' })}
                     className={`w-full aspect-square flex items-center justify-center text-sm font-bold rounded-lg border transition-all ${
-                      isDijawab 
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' 
-                        : 'bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-200'
+                      isDijawab ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-200'
                     }`}
                   >
                     {idx + 1}
@@ -526,27 +520,15 @@ function UjianContent() {
                 )
               })}
             </div>
-
             <div className="space-y-2 text-xs text-slate-500 mb-6 border-t pt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-emerald-600 border border-emerald-600"></div>
-                <span>Sudah Dijawab</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-slate-50 border border-slate-300"></div>
-                <span>Belum Dijawab</span>
-              </div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-emerald-600 border border-emerald-600"></div><span>Sudah Dijawab</span></div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-slate-50 border border-slate-300"></div><span>Belum Dijawab</span></div>
             </div>
-
-            <button 
-              onClick={() => handleSelesaiUjian(false)}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-            >
+            <button onClick={() => handleSelesaiUjian(false)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
               <CheckCircle size={18} /> Selesai Ujian
             </button>
           </div>
         </div>
-
       </div>
     </div>
   )

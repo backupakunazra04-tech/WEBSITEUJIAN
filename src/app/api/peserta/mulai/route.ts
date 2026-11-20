@@ -14,10 +14,7 @@ export async function POST(request: Request) {
     const { scheduleId, token, tanggalLahir } = body
 
     // 1. Validasi Data Siswa
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId }
-    })
-
+    const user = await prisma.user.findUnique({ where: { id: session.userId } })
     if (!user || user.tanggalLahir?.toISOString().split('T')[0] !== tanggalLahir) {
       return NextResponse.json({ error: 'Tanggal lahir tidak cocok' }, { status: 400 })
     }
@@ -38,15 +35,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ujian belum dimulai atau sudah berakhir' }, { status: 400 })
     }
 
-    // 3. Cek Status Keikutsertaan Siswa & Ambil Jawaban Lama
+    // 3. Cek Status Keikutsertaan Siswa
     let participant = await prisma.examParticipant.findUnique({
       where: { userId_scheduleId: { userId: user.id, scheduleId } },
-      include: {
-        answers: true // Ambil jawaban yang sudah pernah diisi
-      }
+      include: { answers: true }
     })
 
-    // --- BLOKIR JIKA SUDAH SELESAI ATAU DIHENTIKAN ---
     if (participant?.status === 'SELESAI') {
       return NextResponse.json({ error: 'Anda sudah menyelesaikan ujian ini.' }, { status: 400 })
     }
@@ -54,7 +48,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ujian Anda telah dihentikan oleh sistem karena pelanggaran.' }, { status: 403 })
     }
 
-    // Jika belum ada data (berarti baru atau baru di-reset), buat baru
     if (!participant) {
       participant = await prisma.examParticipant.create({
         data: {
@@ -62,27 +55,27 @@ export async function POST(request: Request) {
           scheduleId,
           status: 'SEDANG_UJIAN',
           waktuMulai: now,
-          seedAcak: user.id // Gunakan ID user sebagai seed acak
+          seedAcak: user.id
         },
         include: { answers: true }
       })
     }
 
     // 4. Acak Soal & Opsi Jawaban
-    // Menggunakan participant.seedAcak agar urutan konsisten untuk siswa tersebut
     const shuffledQuestions = seededShuffle(schedule.questions, participant.seedAcak)
     
-    // 5. Sembunyikan kunci jawaban (isCorrect) agar tidak bisa diintip dari Inspect Element
+    // 5. Sembunyikan kunci & Kirim data yang diperlukan (Termasuk Stimulus & Gambar)
     const safeQuestions = shuffledQuestions.map((q: any) => ({
       id: q.id,
       tipe: q.tipe,
+      stimulus: q.stimulus, // <-- Kirim Stimulus
       teks: q.teks,
       gambarUrl: q.gambarUrl,
       poin: q.poin,
-      // Acak opsi jawaban per soal menggunakan (seed + id soal) agar acakan tiap soal berbeda
       options: seededShuffle(q.options, participant!.seedAcak + q.id).map((o: any) => ({
         id: o.id,
-        teks: o.teks
+        teks: o.teks,
+        gambarUrl: o.gambarUrl // <-- Kirim Gambar Pilihan
       }))
     }))
 
@@ -91,7 +84,7 @@ export async function POST(request: Request) {
       participantId: participant.id,
       questions: safeQuestions,
       waktuSelesai: schedule.waktuSelesai,
-      jawabanLama: participant.answers // Kirim jawaban lama ke frontend
+      jawabanLama: participant.answers
     })
 
   } catch (error) {
