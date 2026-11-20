@@ -7,7 +7,10 @@ import bcrypt from 'bcrypt'
 export async function GET() {
   try {
     const session = await getSession()
+    console.log("🔍 [GET USERS] Session yang terbaca:", session) // LOG UNTUK DEBUG
+    
     if (!session || session.role !== 'ADMIN') {
+      console.log("⛔ [GET USERS] Ditolak. Session kosong atau role bukan ADMIN.")
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
     }
 
@@ -27,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json({ users })
   } catch (error: any) {
-    console.error("GET Users error detail:", error.message) // <-- Tambahkan detail log
+    console.error("GET Users error detail:", error.message)
     return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 })
   }
 }
@@ -36,7 +39,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getSession()
+    console.log("🔍 [POST USER] Session yang terbaca:", session) // LOG UNTUK DEBUG
+    
     if (!session || session.role !== 'ADMIN') {
+      console.log("⛔ [POST USER] Ditolak. Session kosong atau role bukan ADMIN.")
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
     }
 
@@ -138,7 +144,6 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Tidak bisa menghapus akun sendiri' }, { status: 400 })
     }
 
-    // Cek apakah user sudah ujian
     const hasParticipated = await prisma.examParticipant.findFirst({
       where: { userId: id }
     })
