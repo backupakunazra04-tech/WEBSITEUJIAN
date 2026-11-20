@@ -38,7 +38,6 @@ function BuatSoalContent() {
   const [kunciEssay, setKunciEssay] = useState('') 
   const [poin, setPoin] = useState(1)
   
-  // Default 5 opsi untuk PG
   const [options, setOptions] = useState<Option[]>([
     { teks: '', gambarUrl: '', isCorrect: false },
     { teks: '', gambarUrl: '', isCorrect: false },
@@ -133,7 +132,6 @@ function BuatSoalContent() {
     setError('')
     setIsSubmitting(true)
 
-    // Validasi: Teks wajib diisi untuk PG/Multi, tapi untuk Benar/Salah boleh gambar saja
     const isInvalid = options.some(o => {
       if (tipe === 'PG' || tipe === 'PG_MULTI') return o.teks === ''
       if (tipe === 'BENAR_SALAH') return o.teks === '' && o.gambarUrl === ''
@@ -204,38 +202,55 @@ function BuatSoalContent() {
   }
 
   // ==========================================
-  // TEMPLATE & IMPORT EXCEL
+  // DOWNLOAD TEMPLATE EXCEL (1 FILE, 4 CONTOH)
   // ==========================================
   const downloadTemplateExcel = () => {
     const panduanData = [
-      { Petunjuk: '1. Isi kolom "Tipe" dengan: PG, PG_MULTI, BENAR_SALAH, atau ESSAY.' },
-      { Petunjuk: '2. URL Gambar Soal & URL Gambar Pilihan (A-E) opsional. Gunakan direct link (misal: i.imgur.com/xxx.jpg).' },
-      { Petunjuk: '3. Untuk PG & PG_MULTI, isi Teks Pilihan A-E. Kolom "Kunci PG" isi dengan huruf jawaban (contoh: A atau A,C).' },
-      { Petunjuk: '4. Untuk BENAR_SALAH, isi Pernyataan 1-4. Kolom "Kunci B/S" isi angka 1 (Benar) atau 0 (Salah).' },
+      { Petunjuk: '1. Di bawah ini adalah contoh untuk setiap tipe soal. Silakan hapus baris contoh jika sudah paham.' },
+      { Petunjuk: '2. Kolom "Tipe" wajib diisi: PG, PG_MULTI, BENAR_SALAH, atau ESSAY.' },
+      { Petunjuk: '3. URL Gambar Soal & URL Gambar Pilihan (A-E) opsional. Gunakan direct link (misal: i.imgur.com/xxx.jpg).' },
+      { Petunjuk: '4. Untuk PG & PG_MULTI, isi Teks Pilihan A-E. Kolom "Kunci PG" isi dengan huruf jawaban (contoh: A atau A,C).' },
+      { Petunjuk: '5. Untuk BENAR_SALAH, isi Pernyataan 1-4. Kolom "Kunci B/S" isi angka 1 (Benar) atau 0 (Salah).' },
     ]
     const wsPanduan = XLSX.utils.json_to_sheet(panduanData)
     wsPanduan['!cols'] = [{ wpx: 800 }]
 
+    // DATA CONTOH UNTUK 4 TIPE SOAL
     const templateData = [
       {
         Tipe: 'PG',
         Stimulus: '',
-        Pertanyaan: 'Manakah gambar motor matic?',
+        Pertanyaan: 'Siapakah presiden pertama Indonesia?',
         'URL Gambar Soal': '',
-        'Teks A': 'Motor 1', 'URL Gambar A': 'https://contoh.com/matic.jpg',
-        'Teks B': 'Motor 2', 'URL Gambar B': 'https://contoh.com/bebek.jpg',
-        'Teks C': 'Motor 3', 'URL Gambar C': '',
-        'Teks D': 'Motor 4', 'URL Gambar D': '',
-        'Teks E': 'Motor 5', 'URL Gambar E': '',
+        'Teks A': 'Soekarno', 'URL Gambar A': '',
+        'Teks B': 'Soeharto', 'URL Gambar B': '',
+        'Teks C': 'B.J. Habibie', 'URL Gambar C': '',
+        'Teks D': 'Abdurrahman Wahid', 'URL Gambar D': '',
+        'Teks E': 'Megawati', 'URL Gambar E': '',
         'Kunci PG': 'A',
         'Pernyataan 1': '', 'URL Gambar P1': '', 'Pernyataan 2': '', 'URL Gambar P2': '', 'Pernyataan 3': '', 'URL Gambar P3': '', 'Pernyataan 4': '', 'URL Gambar P4': '',
         'Kunci B/S': '',
         Poin: 1
       },
       {
+        Tipe: 'PG_MULTI',
+        Stimulus: '',
+        Pertanyaan: 'Manakah yang termasuk hewan mamalia? (Pilih lebih dari satu)',
+        'URL Gambar Soal': '',
+        'Teks A': 'Kucing', 'URL Gambar A': '',
+        'Teks B': 'Ayam', 'URL Gambar B': '',
+        'Teks C': 'Anjing', 'URL Gambar C': '',
+        'Teks D': 'Ikan', 'URL Gambar D': '',
+        'Teks E': 'Kambing', 'URL Gambar E': '',
+        'Kunci PG': 'A, C, E',
+        'Pernyataan 1': '', 'URL Gambar P1': '', 'Pernyataan 2': '', 'URL Gambar P2': '', 'Pernyataan 3': '', 'URL Gambar P3': '', 'Pernyataan 4': '', 'URL Gambar P4': '',
+        'Kunci B/S': '',
+        Poin: 2
+      },
+      {
         Tipe: 'BENAR_SALAH',
-        Stimulus: 'Teks bacaan...',
-        Pertanyaan: 'Tentukan Benar atau Salah',
+        Stimulus: 'Pada tanggal 17 Agustus 1945, Indonesia memproklamasikan kemerdekaannya. Teks proklamasi dibacakan oleh Ir. Soekarno didampingi Drs. Mohammad Hatta.',
+        Pertanyaan: 'Berdasarkan teks di atas, tentukan Benar atau Salah untuk setiap pernyataan berikut!',
         'URL Gambar Soal': '',
         'Teks A': '', 'URL Gambar A': '',
         'Teks B': '', 'URL Gambar B': '',
@@ -243,22 +258,48 @@ function BuatSoalContent() {
         'Teks D': '', 'URL Gambar D': '',
         'Teks E': '', 'URL Gambar E': '',
         'Kunci PG': '',
-        'Pernyataan 1': 'Pernyataan teks...', 'URL Gambar P1': 'https://contoh.com/gambar1.jpg',
-        'Pernyataan 2': 'Pernyataan teks 2...', 'URL Gambar P2': '',
-        'Pernyataan 3': '', 'URL Gambar P3': '', 
+        'Pernyataan 1': 'Proklamasi dibacakan oleh Ir. Soekarno.', 'URL Gambar P1': '',
+        'Pernyataan 2': 'Mohammad Hatta tidak hadir saat proklamasi.', 'URL Gambar P2': '',
+        'Pernyataan 3': 'Kemerdekaan diproklamasikan pada 17 Agustus 1945.', 'URL Gambar P3': '',
         'Pernyataan 4': '', 'URL Gambar P4': '',
-        'Kunci B/S': '1, 0', 
+        'Kunci B/S': '1, 0, 1', 
         Poin: 3
+      },
+      {
+        Tipe: 'ESSAY',
+        Stimulus: '',
+        Pertanyaan: 'Jelaskan secara singkat proses terjadinya fotosintesis pada tumbuhan!',
+        'URL Gambar Soal': '',
+        'Teks A': '', 'URL Gambar A': '',
+        'Teks B': '', 'URL Gambar B': '',
+        'Teks C': '', 'URL Gambar C': '',
+        'Teks D': '', 'URL Gambar D': '',
+        'Teks E': '', 'URL Gambar E': '',
+        'Kunci PG': '',
+        'Pernyataan 1': '', 'URL Gambar P1': '', 'Pernyataan 2': '', 'URL Gambar P2': '', 'Pernyataan 3': '', 'URL Gambar P3': '', 'Pernyataan 4': '', 'URL Gambar P4': '',
+        'Kunci B/S': '',
+        Poin: 5
       }
     ]
 
     const worksheet = XLSX.utils.json_to_sheet(templateData)
+    worksheet['!cols'] = [
+      { wpx: 100 }, { wpx: 300 }, { wpx: 300 }, { wpx: 200 },
+      { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 },
+      { wpx: 100 },
+      { wpx: 250 }, { wpx: 150 }, { wpx: 250 }, { wpx: 150 }, { wpx: 250 }, { wpx: 150 }, { wpx: 250 }, { wpx: 150 },
+      { wpx: 100 }, { wpx: 50 }
+    ]
+
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, wsPanduan, 'Panduan')
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Soal')
     XLSX.writeFile(workbook, 'Template_Import_Soal_Lengkap.xlsx')
   }
 
+  // ==========================================
+  // IMPORT EXCEL
+  // ==========================================
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -292,12 +333,8 @@ function BuatSoalContent() {
             for (const opt of opts) {
               const teksOpsi = row[`Teks ${opt}`]
               const urlOpsi = row[`URL Gambar ${opt}`] || ''
-              if (teksOpsi || urlOpsi) { // Boleh isi teks saja atau gambar saja
-                options.push({
-                  teks: teksOpsi || '',
-                  gambarUrl: urlOpsi,
-                  isCorrect: kunciPG.includes(opt) 
-                })
+              if (teksOpsi || urlOpsi) {
+                options.push({ teks: teksOpsi || '', gambarUrl: urlOpsi, isCorrect: kunciPG.includes(opt) })
               }
             }
           } else if (tipe === 'BENAR_SALAH') {
@@ -306,13 +343,8 @@ function BuatSoalContent() {
             pernyataanKeys.forEach((num, index) => {
               const teksPernyataan = row[`Pernyataan ${num}`]
               const urlPernyataan = row[`URL Gambar P${num}`] || ''
-              
               if (teksPernyataan || urlPernyataan) {
-                options.push({
-                  teks: teksPernyataan || '',
-                  gambarUrl: urlPernyataan,
-                  isCorrect: kunciArray[index] === '1'
-                })
+                options.push({ teks: teksPernyataan || '', gambarUrl: urlPernyataan, isCorrect: kunciArray[index] === '1' })
               }
             })
           }
@@ -360,7 +392,11 @@ function BuatSoalContent() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button onClick={downloadTemplateExcel} type="button" className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg font-medium shadow-sm transition-all">
+          <button 
+            onClick={downloadTemplateExcel}
+            type="button" 
+            className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg font-medium shadow-sm transition-all"
+          >
             <Download size={18} /> Template
           </button>
 
@@ -434,7 +470,6 @@ function BuatSoalContent() {
               {tipe !== 'ESSAY' && (
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                   
-                  {/* TIPE BENAR SALAH */}
                   {tipe === 'BENAR_SALAH' ? (
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-3">Tabel Pernyataan (Bisa berisi Teks & Gambar)</label>
@@ -474,7 +509,6 @@ function BuatSoalContent() {
                     </div>
                   ) : (
                     
-                    /* TIPE PG & PG MULTI */
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-3">Pilihan Jawaban (A-E)</label>
                       <div className="space-y-4">
