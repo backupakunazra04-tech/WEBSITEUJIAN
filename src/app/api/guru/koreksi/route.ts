@@ -15,7 +15,6 @@ export async function GET(request: Request) {
 
     if (!scheduleId) return NextResponse.json({ error: 'Schedule ID diperlukan' }, { status: 400 })
 
-    // Ambil peserta yang sudah selesai atau sedang ujian
     const participants = await prisma.examParticipant.findMany({
       where: { 
         scheduleId,
@@ -52,24 +51,23 @@ export async function PUT(request: Request) {
 
     if (!answerId) return NextResponse.json({ error: 'Answer ID diperlukan' }, { status: 400 })
 
-    // Update nilai di tabel Answer
     const updatedAnswer = await prisma.answer.update({
       where: { id: answerId },
       data: { nilaiEssay, komentarGuru }
     })
 
-    // Ambil participantId untuk menghitung ulang total skor
     const participantId = updatedAnswer.participantId
 
-    // Ambil semua jawaban peserta ini
     const allAnswers = await prisma.answer.findMany({
       where: { participantId },
       include: { question: true }
     })
 
-    // Hitung total skor (PG yang benar + Nilai Essay)
     let totalSkor = 0
     for (const ans of allAnswers) {
+      // LOGIKA PENILAIAN: 
+      // Jika ESSAY, ambil nilaiEssay. 
+      // Jika tipe lain (PG, PG_MULTI, BENAR_SALAH), cek isCorrect.
       if (ans.question.tipe === 'ESSAY') {
         totalSkor += (ans.nilaiEssay || 0)
       } else if (ans.isCorrect) {
@@ -77,7 +75,6 @@ export async function PUT(request: Request) {
       }
     }
 
-    // Simpan total skor ke tabel ExamParticipant
     await prisma.examParticipant.update({
       where: { id: participantId },
       data: { skor: totalSkor }

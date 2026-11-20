@@ -33,7 +33,7 @@ function BuatSoalContent() {
   const [tipe, setTipe] = useState('PG')
   const [teks, setTeks] = useState('')
   const [gambarUrl, setGambarUrl] = useState('')
-  const [kunciEssay, setKunciEssay] = useState('') // <-- State Kunci Essay
+  const [kunciEssay, setKunciEssay] = useState('') 
   const [poin, setPoin] = useState(1)
   const [options, setOptions] = useState<Option[]>([
     { teks: '', isCorrect: false },
@@ -60,10 +60,25 @@ function BuatSoalContent() {
     setEditingId(null)
     setTeks('')
     setGambarUrl('')
-    setKunciEssay('') // <-- Reset Kunci Essay
+    setKunciEssay('') 
     setPoin(1)
     setTipe('PG')
     setOptions([{ teks: '', isCorrect: false }, { teks: '', isCorrect: false }])
+  }
+
+  // Fungsi saat user mengganti tipe soal
+  const handleTipeChange = (newTipe: string) => {
+    setTipe(newTipe)
+    if (newTipe === 'BENAR_SALAH') {
+      setOptions([
+        { teks: 'Benar', isCorrect: true },
+        { teks: 'Salah', isCorrect: false }
+      ])
+    } else if (newTipe === 'ESSAY') {
+      setOptions([])
+    } else {
+      setOptions([{ teks: '', isCorrect: false }, { teks: '', isCorrect: false }])
+    }
   }
 
   const handleOptionChange = (index: number, val: string) => {
@@ -74,7 +89,7 @@ function BuatSoalContent() {
 
   const handleCorrectChange = (index: number) => {
     const newOptions = options.map((opt, i) => {
-      if (tipe === 'PG') {
+      if (tipe === 'PG' || tipe === 'BENAR_SALAH') {
         return { ...opt, isCorrect: i === index }
       } else {
         return i === index ? { ...opt, isCorrect: !opt.isCorrect } : opt
@@ -111,7 +126,7 @@ function BuatSoalContent() {
           tipe, 
           teks, 
           gambarUrl, 
-          kunciEssay, // <-- Kirim Kunci Essay
+          kunciEssay, 
           poin,
           options: tipe === 'ESSAY' ? [] : options
         })
@@ -157,7 +172,7 @@ function BuatSoalContent() {
     setTipe(q.tipe)
     setTeks(q.teks)
     setGambarUrl(q.gambarUrl || '')
-    setKunciEssay(q.kunciEssay || '') // <-- Load Kunci Essay
+    setKunciEssay(q.kunciEssay || '') 
     setPoin(q.poin)
     setOptions(q.options.map(o => ({
       teks: o.teks,
@@ -181,14 +196,14 @@ function BuatSoalContent() {
         Poin: 1
       },
       {
-        Tipe: 'ESSAY',
-        Pertanyaan: 'Jelaskan proses fotosintesis!',
-        'Pilihan A': '',
-        'Pilihan B': '',
+        Tipe: 'BENAR_SALAH',
+        Pertanyaan: 'Matahari terbit dari barat.',
+        'Pilihan A': 'Benar',
+        'Pilihan B': 'Salah',
         'Pilihan C': '',
         'Pilihan D': '',
-        'Jawaban Benar': '',
-        Poin: 5
+        'Jawaban Benar': 'B',
+        Poin: 1
       }
     ]
 
@@ -243,6 +258,9 @@ function BuatSoalContent() {
                 })
               }
             }
+          } else if (tipe === 'BENAR_SALAH') {
+            options.push({ teks: 'Benar', isCorrect: jawabanBenar.toUpperCase() === 'A' })
+            options.push({ teks: 'Salah', isCorrect: jawabanBenar.toUpperCase() === 'B' })
           }
 
           await fetch('/api/guru/questions', {
@@ -253,7 +271,7 @@ function BuatSoalContent() {
               tipe,
               teks,
               gambarUrl: '', 
-              kunciEssay: '', // Kosongkan dulu jika dari Excel
+              kunciEssay: '', 
               poin: row['Poin'] || 1,
               options
             })
@@ -275,7 +293,6 @@ function BuatSoalContent() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header */}
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link href="/guru/dashboard" className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
@@ -287,7 +304,6 @@ function BuatSoalContent() {
           </div>
         </div>
 
-        {/* Tombol Aksi (Template & Import) */}
         <div className="flex items-center gap-3">
           <button 
             onClick={downloadTemplateExcel}
@@ -317,7 +333,6 @@ function BuatSoalContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* KIRI: Form Tambah/Edit Soal */}
         <div className="lg:col-span-2">
           <div className={`bg-white p-6 rounded-2xl border shadow-sm transition-colors ${editingId ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200'}`}>
             <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
@@ -327,20 +342,22 @@ function BuatSoalContent() {
             <form onSubmit={handleSimpanSoal} className="space-y-5">
               {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
 
-              {/* Tipe Soal */}
-              <div className="flex gap-4">
+              {/* Tipe Soal - DITAMBAHKAN BENAR_SALAH */}
+              <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={tipe === 'PG'} onChange={() => setTipe('PG')} className="accent-emerald-600" /> Pilihan Ganda
+                  <input type="radio" checked={tipe === 'PG'} onChange={() => handleTipeChange('PG')} className="accent-emerald-600" /> Pilihan Ganda
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={tipe === 'PG_MULTI'} onChange={() => setTipe('PG_MULTI')} className="accent-emerald-600" /> PG Multi
+                  <input type="radio" checked={tipe === 'PG_MULTI'} onChange={() => handleTipeChange('PG_MULTI')} className="accent-emerald-600" /> PG Multi
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={tipe === 'ESSAY'} onChange={() => setTipe('ESSAY')} className="accent-emerald-600" /> Essay
+                  <input type="radio" checked={tipe === 'BENAR_SALAH'} onChange={() => handleTipeChange('BENAR_SALAH')} className="accent-emerald-600" /> Benar/Salah
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={tipe === 'ESSAY'} onChange={() => handleTipeChange('ESSAY')} className="accent-emerald-600" /> Essay
                 </label>
               </div>
 
-              {/* Teks Soal */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Pertanyaan</label>
                 <textarea 
@@ -353,7 +370,6 @@ function BuatSoalContent() {
                 />
               </div>
 
-              {/* INPUT KUNCI JAWABAN ESSAY */}
               {tipe === 'ESSAY' && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Kunci Jawaban / Rubrik Penilaian (Opsional)</label>
@@ -368,7 +384,6 @@ function BuatSoalContent() {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                {/* URL Gambar */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">URL Gambar (Opsional)</label>
                   <div className="relative">
@@ -382,7 +397,6 @@ function BuatSoalContent() {
                     />
                   </div>
                 </div>
-                {/* Poin */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Bobot Poin</label>
                   <input 
@@ -396,15 +410,17 @@ function BuatSoalContent() {
                 </div>
               </div>
 
-              {/* Opsi Jawaban */}
+              {/* Opsi Jawaban: Modifikasi Tampilan untuk BENAR_SALAH */}
               {tipe !== 'ESSAY' && (
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <label className="block text-sm font-medium text-slate-700 mb-3">Pilihan Jawaban</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-3">
+                    {tipe === 'BENAR_SALAH' ? 'Kunci Jawaban' : 'Pilihan Jawaban'}
+                  </label>
                   <div className="space-y-2">
                     {options.map((opt, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <input 
-                          type={tipe === 'PG' ? 'radio' : 'checkbox'} 
+                          type="radio" // Selalu radio untuk Benar/Salah
                           checked={opt.isCorrect}
                           onChange={() => handleCorrectChange(i)}
                           className="w-4 h-4 accent-emerald-600 cursor-pointer"
@@ -413,11 +429,12 @@ function BuatSoalContent() {
                         <input 
                           type="text" 
                           value={opt.teks}
+                          readOnly={tipe === 'BENAR_SALAH'} // Kunci teks jika Benar/Salah
                           onChange={(e) => handleOptionChange(i, e.target.value)}
-                          className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500"
+                          className={`flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none ${tipe === 'BENAR_SALAH' ? 'bg-slate-200 font-semibold cursor-not-allowed' : 'focus:border-emerald-500'}`}
                           placeholder={`Pilihan ${String.fromCharCode(65 + i)}`}
                         />
-                        {options.length > 2 && (
+                        {tipe !== 'BENAR_SALAH' && options.length > 2 && (
                           <button type="button" onClick={() => removeOption(i)} className="text-slate-400 hover:text-red-500">
                             <Trash2 size={16} />
                           </button>
@@ -425,9 +442,11 @@ function BuatSoalContent() {
                       </div>
                     ))}
                   </div>
-                  <button type="button" onClick={addOption} className="mt-3 text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
-                    <Plus size={14} /> Tambah Pilihan
-                  </button>
+                  {tipe !== 'BENAR_SALAH' && (
+                    <button type="button" onClick={addOption} className="mt-3 text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                      <Plus size={14} /> Tambah Pilihan
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -453,7 +472,6 @@ function BuatSoalContent() {
           </div>
         </div>
 
-        {/* KANAN: Daftar Soal */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-24">
             <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex justify-between items-center">
@@ -474,7 +492,6 @@ function BuatSoalContent() {
                     </div>
                     <p className="text-sm text-slate-800 line-clamp-2 pr-16">{q.teks}</p>
                     
-                    {/* Tombol Aksi */}
                     <div className="absolute top-1/2 right-2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all bg-slate-50/80 backdrop-blur-sm rounded-md p-1">
                       <button 
                         onClick={() => handleEditClick(q)}

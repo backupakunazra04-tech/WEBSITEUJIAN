@@ -46,6 +46,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
     }
 
+    // LOGIKA KHUSUS BENAR_SALAH: Paksa opsi hanya 2 (Benar & Salah)
+    let finalOptions = options || []
+    if (tipe === 'BENAR_SALAH') {
+      finalOptions = [
+        { teks: 'Benar', isCorrect: options?.[0]?.isCorrect || false },
+        { teks: 'Salah', isCorrect: options?.[1]?.isCorrect || false }
+      ]
+    }
+
     const countSoal = await prisma.question.count({
       where: { scheduleId }
     })
@@ -56,14 +65,14 @@ export async function POST(request: Request) {
         tipe,
         teks,
         gambarUrl: gambarUrl || null,
-        kunciEssay: kunciEssay || null, // <-- Simpan Kunci Essay
+        kunciEssay: kunciEssay || null, 
         poin: parseInt(poin) || 1,
         urutan: countSoal + 1,
         options: {
-          create: options?.map((opt: any) => ({
+          create: finalOptions.map((opt: any) => ({
             teks: opt.teks,
             isCorrect: opt.isCorrect
-          })) || []
+          }))
         }
       }
     })
@@ -116,6 +125,15 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
     }
 
+    // LOGIKA KHUSUS BENAR_SALAH saat Edit
+    let finalOptions = options || []
+    if (tipe === 'BENAR_SALAH') {
+      finalOptions = [
+        { teks: 'Benar', isCorrect: options?.[0]?.isCorrect || false },
+        { teks: 'Salah', isCorrect: options?.[1]?.isCorrect || false }
+      ]
+    }
+
     const updatedQuestion = await prisma.$transaction(async (tx) => {
       await tx.questionOption.deleteMany({
         where: { questionId: id }
@@ -127,13 +145,13 @@ export async function PUT(request: Request) {
           tipe,
           teks,
           gambarUrl: gambarUrl || null,
-          kunciEssay: kunciEssay || null, // <-- Update Kunci Essay
+          kunciEssay: kunciEssay || null,
           poin: parseInt(poin) || 1,
           options: {
-            create: options?.map((opt: any) => ({
+            create: finalOptions.map((opt: any) => ({
               teks: opt.teks,
               isCorrect: opt.isCorrect
-            })) || []
+            }))
           }
         }
       })
