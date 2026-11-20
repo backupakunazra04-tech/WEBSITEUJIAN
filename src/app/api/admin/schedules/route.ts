@@ -12,7 +12,7 @@ export async function GET() {
 
     const schedules = await prisma.examSchedule.findMany({
       include: {
-        subject: true, // Ambil data nama mapel juga
+        subject: true,
       },
       orderBy: { waktuMulai: 'desc' }
     })
@@ -39,14 +39,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Semua kolom wajib diisi' }, { status: 400 })
     }
 
+    // PERBAIKAN TIMEZONE: 
+    // Kita paksa waktu yang dikirim dari form dianggap sebagai WIB (+07:00)
+    const dateMulai = new Date(`${waktuMulai}:00+07:00`)
+    const dateSelesai = new Date(`${waktuSelesai}:00+07:00`)
+
     // Validasi: Cek apakah jam bentrok dengan jadwal lain di kelas yang sama
     const bentrok = await prisma.examSchedule.findFirst({
       where: {
         gradeLevel,
         OR: [
           {
-            waktuMulai: { lt: new Date(waktuSelesai) },
-            waktuSelesai: { gt: new Date(waktuMulai) }
+            waktuMulai: { lt: dateSelesai },
+            waktuSelesai: { gt: dateMulai }
           }
         ]
       }
@@ -60,9 +65,9 @@ export async function POST(request: Request) {
       data: {
         subjectId,
         gradeLevel,
-        waktuMulai: new Date(waktuMulai),
-        waktuSelesai: new Date(waktuSelesai),
-        token: token.toUpperCase(), // Token biasanya huruf besar
+        waktuMulai: dateMulai,
+        waktuSelesai: dateSelesai,
+        token: token.toUpperCase(),
         status: 'DRAFT'
       }
     })
@@ -74,7 +79,35 @@ export async function POST(request: Request) {
   }
 }
 
-// 4. Hapus Jadwal (Dengan Opsi Force Delete)
+// ✅ FUNGSI BARU: Untuk mengubah status (Aktifkan / Selesaikan)
+export async function PUT(request: Request) {
+  try {
+    const session = await getSession()
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { id, status } = body
+
+    if (!id || !status) {
+      return NextResponse.json({ error: 'ID dan Status wajib dikirim' }, { status: 400 })
+    }
+
+    // Update status di database
+    const updatedSchedule = await prisma.examSchedule.update({
+      where: { id: id },
+      data: { status: status }
+    })
+
+    return NextResponse.json({ success: true, schedule: updatedSchedule })
+  } catch (error) {
+    console.error('Update status error:', error)
+    return NextResponse.json({ error: 'Gagal mengubah status jadwal' }, { status: 500 })
+  }
+}
+
+// Hapus Jadwal (Dengan Opsi Force Delete)
 export async function DELETE(request: Request) {
   try {
     const session = await getSession()
@@ -84,32 +117,28 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    const force = searchParams.get('force') === 'true' // Cek apakah dipaksa hapus
+    const force = searchParams.get('force') === 'true'
 
     if (!id) {
       return NextResponse.json({ error: 'ID jadwal diperlukan' }, { status: 400 })
     }
 
-    // Cek apakah sudah ada peserta
     const hasParticipants = await prisma.examParticipant.findFirst({
       where: { scheduleId: id }
     })
 
-    // Jika ada peserta tapi tidak menggunakan force delete, tolak
     if (hasParticipants && !force) {
       return NextResponse.json({ 
         error: 'Jadwal ini sudah memiliki data peserta. Diperlukan konfirmasi khusus untuk menghapus.' 
       }, { status: 400 })
     }
 
-    // Jika force delete (admin sudah setuju), hapus data terkait terlebih dahulu
     if (force) {
       await prisma.answer.deleteMany({ where: { participant: { scheduleId: id } } })
       await prisma.violation.deleteMany({ where: { scheduleId: id } })
       await prisma.examParticipant.deleteMany({ where: { scheduleId: id } })
     }
 
-    // Hapus jadwal ujian
     await prisma.examSchedule.delete({
       where: { id }
     })

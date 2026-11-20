@@ -153,12 +153,24 @@ export default function JadwalUjianPage() {
 
   // Helper untuk format tanggal cantik
   const formatDate = (dateString: string) => {
+    // Karena Supabase/Vercel menyimpan dalam UTC, kita paksa browser untuk menampilkannya dalam zona waktu Asia/Jakarta (WIB)
     const d = new Date(dateString)
-    return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })
+    return d.toLocaleDateString('id-ID', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta' // ✅ Tambahan Penting
+    })
   }
+  
   const formatTime = (dateString: string) => {
     const d = new Date(dateString)
-    return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+    return d.toLocaleTimeString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZone: 'Asia/Jakarta' // ✅ Tambahan Penting
+    }) + ' WIB'
   }
 
   return (
