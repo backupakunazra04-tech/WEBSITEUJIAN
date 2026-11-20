@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   }
 }
 
-// 2. Tambah Soal Baru
+// 2. Tambah Soal Baru (Termasuk dari Import Excel)
 export async function POST(request: Request) {
   try {
     const session = await getSession()
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       data: {
         scheduleId,
         tipe,
-        stimulus: stimulus || null, // Simpan stimulus (teks bacaan)
+        stimulus: stimulus || null, // Menyimpan Stimulus (Teks Bacaan)
         teks,
         gambarUrl: gambarUrl || null,
         kunciEssay: kunciEssay || null, 
@@ -120,7 +120,7 @@ export async function PUT(request: Request) {
 
     // Gunakan transaksi untuk menghapus opsi lama dan membuat opsi baru
     const updatedQuestion = await prisma.$transaction(async (tx) => {
-      // Hapus opsi lama
+      // Hapus opsi lama terkait soal ini
       await tx.questionOption.deleteMany({
         where: { questionId: id }
       })

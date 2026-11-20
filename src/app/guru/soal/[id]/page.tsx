@@ -37,7 +37,12 @@ function BuatSoalContent() {
   const [gambarUrl, setGambarUrl] = useState('')
   const [kunciEssay, setKunciEssay] = useState('') 
   const [poin, setPoin] = useState(1)
+  
+  // Default 5 opsi untuk PG
   const [options, setOptions] = useState<Option[]>([
+    { teks: '', isCorrect: false },
+    { teks: '', isCorrect: false },
+    { teks: '', isCorrect: false },
     { teks: '', isCorrect: false },
     { teks: '', isCorrect: false },
   ])
@@ -66,7 +71,13 @@ function BuatSoalContent() {
     setGambarUrl('')
     setKunciEssay('') 
     setPoin(1)
-    setOptions([{ teks: '', isCorrect: false }, { teks: '', isCorrect: false }])
+    setOptions([
+      { teks: '', isCorrect: false },
+      { teks: '', isCorrect: false },
+      { teks: '', isCorrect: false },
+      { teks: '', isCorrect: false },
+      { teks: '', isCorrect: false },
+    ])
   }
 
   const handleTipeChange = (newTipe: string) => {
@@ -79,7 +90,13 @@ function BuatSoalContent() {
     } else if (newTipe === 'ESSAY') {
       setOptions([])
     } else {
-      setOptions([{ teks: '', isCorrect: false }, { teks: '', isCorrect: false }])
+      setOptions([
+        { teks: '', isCorrect: false },
+        { teks: '', isCorrect: false },
+        { teks: '', isCorrect: false },
+        { teks: '', isCorrect: false },
+        { teks: '', isCorrect: false },
+      ])
     }
   }
 
@@ -106,7 +123,7 @@ function BuatSoalContent() {
     setOptions(newOptions)
   }
 
-  const addOption = () => setOptions([...options, { teks: '', isCorrect: true }])
+  const addOption = () => setOptions([...options, { teks: '', isCorrect: false }])
   const removeOption = (index: number) => {
     if (options.length > 2) setOptions(options.filter((_, i) => i !== index))
   }
@@ -180,29 +197,30 @@ function BuatSoalContent() {
   }
 
   // ==========================================
-  // DOWNLOAD TEMPLATE EXCEL (DIPERBARUI)
+  // DOWNLOAD TEMPLATE EXCEL (CONTOH LENGKAP)
   // ==========================================
   const downloadTemplateExcel = () => {
-    // Sheet 1: Panduan
     const panduanData = [
-      { Petunjuk: '1. Untuk tipe PG, isi Pilihan A-D. Kolom "Kunci PG" isi dengan huruf jawaban benar (contoh: A).' },
-      { Petunjuk: '2. Untuk tipe BENAR_SALAH, isi Pernyataan 1-4 (boleh kurang).' },
-      { Petunjuk: '3. Kolom "Kunci B/S" isi dengan angka 1 (Benar) atau 0 (Salah).' },
-      { Petunjuk: '4. Jika ada 3 pernyataan, isi misal: 1, 0, 1 (Pernyataan 1 Benar, Pernyataan 2 Salah, Pernyataan 3 Benar).' }
+      { Petunjuk: '1. Isi kolom "Tipe" dengan salah satu: PG, PG_MULTI, BENAR_SALAH, atau ESSAY.' },
+      { Petunjuk: '2. Untuk PG & PG_MULTI, isi Pilihan A-E. Kolom "Kunci PG" isi dengan huruf jawaban (contoh: A atau A,C).' },
+      { Petunjuk: '3. Untuk BENAR_SALAH, isi Pernyataan 1-4. Kolom "Kunci B/S" isi angka 1 (Benar) atau 0 (Salah), pisahkan koma (contoh: 1, 0, 1).' },
+      { Petunjuk: '4. Untuk ESSAY, isi Pertanyaan dan Poin. Kolom lain kosongkan.' },
+      { Petunjuk: '5. Stimulus hanya wajib diisi untuk tipe BENAR_SALAH (teks bacaan).' }
     ]
     const wsPanduan = XLSX.utils.json_to_sheet(panduanData)
-    wsPanduan['!cols'] = [{ wpx: 600 }]
+    wsPanduan['!cols'] = [{ wpx: 800 }]
 
-    // Sheet 2: Data Soal
+    // CONTOH UNTUK SETIAP TIPE SOAL
     const templateData = [
       {
         Tipe: 'PG',
         Stimulus: '',
-        Pertanyaan: 'Ibu kota Indonesia adalah...',
-        'Pilihan A': 'Jakarta',
-        'Pilihan B': 'Bandung',
-        'Pilihan C': 'Surabaya',
-        'Pilihan D': 'Medan',
+        Pertanyaan: 'Siapakah presiden pertama Indonesia?',
+        'Pilihan A': 'Soekarno',
+        'Pilihan B': 'Soeharto',
+        'Pilihan C': 'B.J. Habibie',
+        'Pilihan D': 'Abdurrahman Wahid',
+        'Pilihan E': 'Megawati',
         'Kunci PG': 'A',
         'Pernyataan 1': '',
         'Pernyataan 2': '',
@@ -212,27 +230,63 @@ function BuatSoalContent() {
         Poin: 1
       },
       {
+        Tipe: 'PG_MULTI',
+        Stimulus: '',
+        Pertanyaan: 'Manakah yang termasuk hewan mamalia? (Pilih lebih dari satu)',
+        'Pilihan A': 'Kucing',
+        'Pilihan B': 'Ayam',
+        'Pilihan C': 'Anjing',
+        'Pilihan D': 'Ikan',
+        'Pilihan E': 'Kambing',
+        'Kunci PG': 'A, C, E',
+        'Pernyataan 1': '',
+        'Pernyataan 2': '',
+        'Pernyataan 3': '',
+        'Pernyataan 4': '',
+        'Kunci B/S': '',
+        Poin: 2
+      },
+      {
         Tipe: 'BENAR_SALAH',
-        Stimulus: 'Sebuah bengkel otomotif sedang melakukan perbaikan...',
-        Pertanyaan: 'Tentukan Benar atau Salah untuk setiap pernyataan berikut!',
+        Stimulus: 'Pada tanggal 17 Agustus 1945, Indonesia memproklamasikan kemerdekaannya. Teks proklamasi dibacakan oleh Ir. Soekarno didampingi Drs. Mohammad Hatta.',
+        Pertanyaan: 'Berdasarkan teks di atas, tentukan Benar atau Salah untuk setiap pernyataan berikut!',
         'Pilihan A': '',
         'Pilihan B': '',
         'Pilihan C': '',
         'Pilihan D': '',
+        'Pilihan E': '',
         'Kunci PG': '',
-        'Pernyataan 1': 'Apabila baut yang mau didorkan sedikit aus, gunakan kunci sok tipe bintang.',
-        'Pernyataan 2': 'Impact wrench sebaiknya disetel pada kecepatan maksimum.',
-        'Pernyataan 3': 'Kunci yang paling aman untuk baut/mur adalah ring.',
+        'Pernyataan 1': 'Proklamasi dibacakan oleh Ir. Soekarno.',
+        'Pernyataan 2': 'Mohammad Hatta tidak hadir saat proklamasi.',
+        'Pernyataan 3': 'Kemerdekaan diproklamasikan pada 17 Agustus 1945.',
         'Pernyataan 4': '',
-        'Kunci B/S': '0, 0, 1', // Contoh: Salah, Salah, Benar
-        Poin: 2
+        'Kunci B/S': '1, 0, 1', 
+        Poin: 3
+      },
+      {
+        Tipe: 'ESSAY',
+        Stimulus: '',
+        Pertanyaan: 'Jelaskan secara singkat proses terjadinya fotosintesis pada tumbuhan!',
+        'Pilihan A': '',
+        'Pilihan B': '',
+        'Pilihan C': '',
+        'Pilihan D': '',
+        'Pilihan E': '',
+        'Kunci PG': '',
+        'Pernyataan 1': '',
+        'Pernyataan 2': '',
+        'Pernyataan 3': '',
+        'Pernyataan 4': '',
+        'Kunci B/S': '',
+        Poin: 5
       }
     ]
 
     const worksheet = XLSX.utils.json_to_sheet(templateData)
     worksheet['!cols'] = [
       { wpx: 100 }, { wpx: 300 }, { wpx: 300 }, 
-      { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 150 }, { wpx: 80 },
+      { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, // A - E
+      { wpx: 80 },
       { wpx: 250 }, { wpx: 250 }, { wpx: 250 }, { wpx: 250 }, { wpx: 100 },
       { wpx: 50 }
     ]
@@ -244,7 +298,7 @@ function BuatSoalContent() {
   }
 
   // ==========================================
-  // IMPORT EXCEL (DIPERBARUI)
+  // IMPORT EXCEL
   // ==========================================
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -256,7 +310,6 @@ function BuatSoalContent() {
         const data = new Uint8Array(event.target?.result as ArrayBuffer)
         const workbook = XLSX.read(data, { type: 'array' })
         
-        // Pastikan membaca sheet "Data Soal" jika ada, jika tidak ambil sheet pertama
         const sheetName = workbook.SheetNames.includes('Data Soal') ? 'Data Soal' : workbook.SheetNames[0]
         const worksheet = workbook.Sheets[sheetName]
         
@@ -280,7 +333,7 @@ function BuatSoalContent() {
 
           if (tipe === 'PG' || tipe === 'PG_MULTI') {
             const kunciPG = (row['Kunci PG'] || '').toUpperCase()
-            const opts = ['A', 'B', 'C', 'D']
+            const opts = ['A', 'B', 'C', 'D', 'E']
             for (const opt of opts) {
               const teksOpsi = row[`Pilihan ${opt}`]
               if (teksOpsi) {
@@ -291,7 +344,6 @@ function BuatSoalContent() {
               }
             }
           } else if (tipe === 'BENAR_SALAH') {
-            // Pisahkan kunci berdasarkan koma, misal: "1, 0, 1" menjadi ["1", "0", "1"]
             const kunciArray = (row['Kunci B/S'] || '').toString().split(',').map((s: string) => s.trim())
             
             const pernyataanKeys = ['Pernyataan 1', 'Pernyataan 2', 'Pernyataan 3', 'Pernyataan 4']
@@ -300,7 +352,6 @@ function BuatSoalContent() {
               if (teksPernyataan) {
                 options.push({
                   teks: teksPernyataan,
-                  // Jika kunciArray[index] adalah '1', maka Benar (true). Selain itu Salah (false)
                   isCorrect: kunciArray[index] === '1'
                 })
               }
@@ -494,7 +545,7 @@ function BuatSoalContent() {
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-3">Pilihan Jawaban</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-3">Pilihan Jawaban (A-E)</label>
                       <div className="space-y-2">
                         {options.map((opt, i) => (
                           <div key={i} className="flex items-center gap-3">
