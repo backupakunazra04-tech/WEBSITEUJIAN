@@ -136,6 +136,7 @@ export const QuestionScalarFieldEnum = {
   id: 'id',
   scheduleId: 'scheduleId',
   tipe: 'tipe',
+  stimulus: 'stimulus',
   teks: 'teks',
   gambarUrl: 'gambarUrl',
   kunciEssay: 'kunciEssay',

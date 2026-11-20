@@ -31,7 +31,8 @@ export type GradeLevel = (typeof GradeLevel)[keyof typeof GradeLevel]
 export const QuestionType = {
   PG: 'PG',
   PG_MULTI: 'PG_MULTI',
-  ESSAY: 'ESSAY'
+  ESSAY: 'ESSAY',
+  BENAR_SALAH: 'BENAR_SALAH'
 } as const
 
 export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]

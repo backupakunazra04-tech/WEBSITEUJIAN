@@ -40,6 +40,7 @@ export type QuestionMinAggregateOutputType = {
   id: string | null
   scheduleId: string | null
   tipe: $Enums.QuestionType | null
+  stimulus: string | null
   teks: string | null
   gambarUrl: string | null
   kunciEssay: string | null
@@ -53,6 +54,7 @@ export type QuestionMaxAggregateOutputType = {
   id: string | null
   scheduleId: string | null
   tipe: $Enums.QuestionType | null
+  stimulus: string | null
   teks: string | null
   gambarUrl: string | null
   kunciEssay: string | null
@@ -66,6 +68,7 @@ export type QuestionCountAggregateOutputType = {
   id: number
   scheduleId: number
   tipe: number
+  stimulus: number
   teks: number
   gambarUrl: number
   kunciEssay: number
@@ -91,6 +94,7 @@ export type QuestionMinAggregateInputType = {
   id?: true
   scheduleId?: true
   tipe?: true
+  stimulus?: true
   teks?: true
   gambarUrl?: true
   kunciEssay?: true
@@ -104,6 +108,7 @@ export type QuestionMaxAggregateInputType = {
   id?: true
   scheduleId?: true
   tipe?: true
+  stimulus?: true
   teks?: true
   gambarUrl?: true
   kunciEssay?: true
@@ -117,6 +122,7 @@ export type QuestionCountAggregateInputType = {
   id?: true
   scheduleId?: true
   tipe?: true
+  stimulus?: true
   teks?: true
   gambarUrl?: true
   kunciEssay?: true
@@ -217,6 +223,7 @@ export type QuestionGroupByOutputType = {
   id: string
   scheduleId: string
   tipe: $Enums.QuestionType
+  stimulus: string | null
   teks: string
   gambarUrl: string | null
   kunciEssay: string | null
@@ -253,6 +260,7 @@ export type QuestionWhereInput = {
   id?: Prisma.StringFilter<"Question"> | string
   scheduleId?: Prisma.StringFilter<"Question"> | string
   tipe?: Prisma.EnumQuestionTypeFilter<"Question"> | $Enums.QuestionType
+  stimulus?: Prisma.StringNullableFilter<"Question"> | string | null
   teks?: Prisma.StringFilter<"Question"> | string
   gambarUrl?: Prisma.StringNullableFilter<"Question"> | string | null
   kunciEssay?: Prisma.StringNullableFilter<"Question"> | string | null
@@ -269,6 +277,7 @@ export type QuestionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   tipe?: Prisma.SortOrder
+  stimulus?: Prisma.SortOrderInput | Prisma.SortOrder
   teks?: Prisma.SortOrder
   gambarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   kunciEssay?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -288,6 +297,7 @@ export type QuestionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.QuestionWhereInput | Prisma.QuestionWhereInput[]
   scheduleId?: Prisma.StringFilter<"Question"> | string
   tipe?: Prisma.EnumQuestionTypeFilter<"Question"> | $Enums.QuestionType
+  stimulus?: Prisma.StringNullableFilter<"Question"> | string | null
   teks?: Prisma.StringFilter<"Question"> | string
   gambarUrl?: Prisma.StringNullableFilter<"Question"> | string | null
   kunciEssay?: Prisma.StringNullableFilter<"Question"> | string | null
@@ -304,6 +314,7 @@ export type QuestionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   tipe?: Prisma.SortOrder
+  stimulus?: Prisma.SortOrderInput | Prisma.SortOrder
   teks?: Prisma.SortOrder
   gambarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   kunciEssay?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -325,6 +336,7 @@ export type QuestionScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Question"> | string
   scheduleId?: Prisma.StringWithAggregatesFilter<"Question"> | string
   tipe?: Prisma.EnumQuestionTypeWithAggregatesFilter<"Question"> | $Enums.QuestionType
+  stimulus?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
   teks?: Prisma.StringWithAggregatesFilter<"Question"> | string
   gambarUrl?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
   kunciEssay?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
@@ -337,6 +349,7 @@ export type QuestionScalarWhereWithAggregatesInput = {
 export type QuestionCreateInput = {
   id?: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -353,6 +366,7 @@ export type QuestionUncheckedCreateInput = {
   id?: string
   scheduleId: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -367,6 +381,7 @@ export type QuestionUncheckedCreateInput = {
 export type QuestionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -383,6 +398,7 @@ export type QuestionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -398,6 +414,7 @@ export type QuestionCreateManyInput = {
   id?: string
   scheduleId: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -410,6 +427,7 @@ export type QuestionCreateManyInput = {
 export type QuestionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -423,6 +441,7 @@ export type QuestionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -446,6 +465,7 @@ export type QuestionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   tipe?: Prisma.SortOrder
+  stimulus?: Prisma.SortOrder
   teks?: Prisma.SortOrder
   gambarUrl?: Prisma.SortOrder
   kunciEssay?: Prisma.SortOrder
@@ -464,6 +484,7 @@ export type QuestionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   tipe?: Prisma.SortOrder
+  stimulus?: Prisma.SortOrder
   teks?: Prisma.SortOrder
   gambarUrl?: Prisma.SortOrder
   kunciEssay?: Prisma.SortOrder
@@ -477,6 +498,7 @@ export type QuestionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   tipe?: Prisma.SortOrder
+  stimulus?: Prisma.SortOrder
   teks?: Prisma.SortOrder
   gambarUrl?: Prisma.SortOrder
   kunciEssay?: Prisma.SortOrder
@@ -581,6 +603,7 @@ export type QuestionUpdateOneRequiredWithoutAnswersNestedInput = {
 export type QuestionCreateWithoutScheduleInput = {
   id?: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -595,6 +618,7 @@ export type QuestionCreateWithoutScheduleInput = {
 export type QuestionUncheckedCreateWithoutScheduleInput = {
   id?: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -639,6 +663,7 @@ export type QuestionScalarWhereInput = {
   id?: Prisma.StringFilter<"Question"> | string
   scheduleId?: Prisma.StringFilter<"Question"> | string
   tipe?: Prisma.EnumQuestionTypeFilter<"Question"> | $Enums.QuestionType
+  stimulus?: Prisma.StringNullableFilter<"Question"> | string | null
   teks?: Prisma.StringFilter<"Question"> | string
   gambarUrl?: Prisma.StringNullableFilter<"Question"> | string | null
   kunciEssay?: Prisma.StringNullableFilter<"Question"> | string | null
@@ -651,6 +676,7 @@ export type QuestionScalarWhereInput = {
 export type QuestionCreateWithoutOptionsInput = {
   id?: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -666,6 +692,7 @@ export type QuestionUncheckedCreateWithoutOptionsInput = {
   id?: string
   scheduleId: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -695,6 +722,7 @@ export type QuestionUpdateToOneWithWhereWithoutOptionsInput = {
 export type QuestionUpdateWithoutOptionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -710,6 +738,7 @@ export type QuestionUncheckedUpdateWithoutOptionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -723,6 +752,7 @@ export type QuestionUncheckedUpdateWithoutOptionsInput = {
 export type QuestionCreateWithoutAnswersInput = {
   id?: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -738,6 +768,7 @@ export type QuestionUncheckedCreateWithoutAnswersInput = {
   id?: string
   scheduleId: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -767,6 +798,7 @@ export type QuestionUpdateToOneWithWhereWithoutAnswersInput = {
 export type QuestionUpdateWithoutAnswersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -782,6 +814,7 @@ export type QuestionUncheckedUpdateWithoutAnswersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -795,6 +828,7 @@ export type QuestionUncheckedUpdateWithoutAnswersInput = {
 export type QuestionCreateManyScheduleInput = {
   id?: string
   tipe: $Enums.QuestionType
+  stimulus?: string | null
   teks: string
   gambarUrl?: string | null
   kunciEssay?: string | null
@@ -807,6 +841,7 @@ export type QuestionCreateManyScheduleInput = {
 export type QuestionUpdateWithoutScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -821,6 +856,7 @@ export type QuestionUpdateWithoutScheduleInput = {
 export type QuestionUncheckedUpdateWithoutScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -835,6 +871,7 @@ export type QuestionUncheckedUpdateWithoutScheduleInput = {
 export type QuestionUncheckedUpdateManyWithoutScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tipe?: Prisma.EnumQuestionTypeFieldUpdateOperationsInput | $Enums.QuestionType
+  stimulus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teks?: Prisma.StringFieldUpdateOperationsInput | string
   gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kunciEssay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -888,6 +925,7 @@ export type QuestionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   scheduleId?: boolean
   tipe?: boolean
+  stimulus?: boolean
   teks?: boolean
   gambarUrl?: boolean
   kunciEssay?: boolean
@@ -905,6 +943,7 @@ export type QuestionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   scheduleId?: boolean
   tipe?: boolean
+  stimulus?: boolean
   teks?: boolean
   gambarUrl?: boolean
   kunciEssay?: boolean
@@ -919,6 +958,7 @@ export type QuestionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   scheduleId?: boolean
   tipe?: boolean
+  stimulus?: boolean
   teks?: boolean
   gambarUrl?: boolean
   kunciEssay?: boolean
@@ -933,6 +973,7 @@ export type QuestionSelectScalar = {
   id?: boolean
   scheduleId?: boolean
   tipe?: boolean
+  stimulus?: boolean
   teks?: boolean
   gambarUrl?: boolean
   kunciEssay?: boolean
@@ -942,7 +983,7 @@ export type QuestionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "scheduleId" | "tipe" | "teks" | "gambarUrl" | "kunciEssay" | "poin" | "urutan" | "createdAt" | "updatedAt", ExtArgs["result"]["question"]>
+export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "scheduleId" | "tipe" | "stimulus" | "teks" | "gambarUrl" | "kunciEssay" | "poin" | "urutan" | "createdAt" | "updatedAt", ExtArgs["result"]["question"]>
 export type QuestionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   schedule?: boolean | Prisma.ExamScheduleDefaultArgs<ExtArgs>
   options?: boolean | Prisma.Question$optionsArgs<ExtArgs>
@@ -967,6 +1008,7 @@ export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     id: string
     scheduleId: string
     tipe: $Enums.QuestionType
+    stimulus: string | null
     teks: string
     gambarUrl: string | null
     kunciEssay: string | null
@@ -1403,6 +1445,7 @@ export interface QuestionFieldRefs {
   readonly id: Prisma.FieldRef<"Question", 'String'>
   readonly scheduleId: Prisma.FieldRef<"Question", 'String'>
   readonly tipe: Prisma.FieldRef<"Question", 'QuestionType'>
+  readonly stimulus: Prisma.FieldRef<"Question", 'String'>
   readonly teks: Prisma.FieldRef<"Question", 'String'>
   readonly gambarUrl: Prisma.FieldRef<"Question", 'String'>
   readonly kunciEssay: Prisma.FieldRef<"Question", 'String'>

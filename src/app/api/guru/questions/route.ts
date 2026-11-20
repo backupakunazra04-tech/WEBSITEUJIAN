@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 
-// 1. Ambil soal berdasarkan ID Jadwal
+// 1. Ambil soal
 export async function GET(request: Request) {
   try {
     const session = await getSession()
@@ -19,9 +19,7 @@ export async function GET(request: Request) {
 
     const questions = await prisma.question.findMany({
       where: { scheduleId },
-      include: {
-        options: true
-      },
+      include: { options: true },
       orderBy: { urutan: 'asc' }
     })
 
@@ -31,7 +29,7 @@ export async function GET(request: Request) {
   }
 }
 
-// 2. Tambah Soal Baru
+// 2. Tambah Soal
 export async function POST(request: Request) {
   try {
     const session = await getSession()
@@ -40,39 +38,29 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { scheduleId, tipe, teks, gambarUrl, kunciEssay, poin, options } = body
+    const { scheduleId, tipe, stimulus, teks, gambarUrl, kunciEssay, poin, options } = body
 
     if (!scheduleId || !tipe || !teks) {
       return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
     }
 
-    // LOGIKA KHUSUS BENAR_SALAH: Paksa opsi hanya 2 (Benar & Salah)
-    let finalOptions = options || []
-    if (tipe === 'BENAR_SALAH') {
-      finalOptions = [
-        { teks: 'Benar', isCorrect: options?.[0]?.isCorrect || false },
-        { teks: 'Salah', isCorrect: options?.[1]?.isCorrect || false }
-      ]
-    }
-
-    const countSoal = await prisma.question.count({
-      where: { scheduleId }
-    })
+    const countSoal = await prisma.question.count({ where: { scheduleId } })
 
     const newQuestion = await prisma.question.create({
       data: {
         scheduleId,
         tipe,
+        stimulus: stimulus || null, // Simpan stimulus
         teks,
         gambarUrl: gambarUrl || null,
         kunciEssay: kunciEssay || null, 
         poin: parseInt(poin) || 1,
         urutan: countSoal + 1,
         options: {
-          create: finalOptions.map((opt: any) => ({
+          create: options?.map((opt: any) => ({
             teks: opt.teks,
             isCorrect: opt.isCorrect
-          }))
+          })) || []
         }
       }
     })
@@ -95,22 +83,17 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url)
     const questionId = searchParams.get('id')
 
-    if (!questionId) {
-      return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
-    }
+    if (!questionId) return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
 
-    await prisma.question.delete({
-      where: { id: questionId }
-    })
+    await prisma.question.delete({ where: { id: questionId } })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Hapus soal error:', error)
     return NextResponse.json({ error: 'Gagal menghapus soal' }, { status: 500 })
   }
 }
 
-// 4. Update Soal (Edit)
+// 4. Edit Soal
 export async function PUT(request: Request) {
   try {
     const session = await getSession()
@@ -119,39 +102,27 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { id, tipe, teks, gambarUrl, kunciEssay, poin, options } = body
+    const { id, tipe, stimulus, teks, gambarUrl, kunciEssay, poin, options } = body
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
-    }
-
-    // LOGIKA KHUSUS BENAR_SALAH saat Edit
-    let finalOptions = options || []
-    if (tipe === 'BENAR_SALAH') {
-      finalOptions = [
-        { teks: 'Benar', isCorrect: options?.[0]?.isCorrect || false },
-        { teks: 'Salah', isCorrect: options?.[1]?.isCorrect || false }
-      ]
-    }
+    if (!id) return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
 
     const updatedQuestion = await prisma.$transaction(async (tx) => {
-      await tx.questionOption.deleteMany({
-        where: { questionId: id }
-      })
+      await tx.questionOption.deleteMany({ where: { questionId: id } })
 
       return tx.question.update({
         where: { id },
         data: {
           tipe,
+          stimulus: stimulus || null, // Update stimulus
           teks,
           gambarUrl: gambarUrl || null,
           kunciEssay: kunciEssay || null,
           poin: parseInt(poin) || 1,
           options: {
-            create: finalOptions.map((opt: any) => ({
+            create: options?.map((opt: any) => ({
               teks: opt.teks,
               isCorrect: opt.isCorrect
-            }))
+            })) || []
           }
         }
       })

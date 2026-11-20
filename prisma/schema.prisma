@@ -30,6 +30,7 @@ enum QuestionType {
   PG
   PG_MULTI
   ESSAY
+  BENAR_SALAH // <-- TAMBAHAN BARU
 }
 
 enum ScheduleStatus {
@@ -143,9 +144,10 @@ model Question {
   id         String       @id @default(cuid())
   scheduleId String
   tipe       QuestionType
+  stimulus   String?      @db.Text // <-- TAMBAHAN BARU (Untuk Teks Bacaan Benar/Salah)
   teks       String       @db.Text
   gambarUrl  String?
-  kunciEssay String?      @db.Text  // <-- KUNCI JAWABAN ESSAY
+  kunciEssay String?      @db.Text
   poin       Int          @default(1)
   urutan     Int          @default(0)
   createdAt  DateTime     @default(now())
