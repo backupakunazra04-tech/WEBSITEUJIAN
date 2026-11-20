@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-export async function GET() {
-  // Hapus cookie session dengan mengaturnya menjadi kosong dan kedaluwarsa
+export async function GET(request: Request) { // 👈 Tambahkan parameter request
+  // Hapus cookie session
   const cookieStore = await cookies()
   cookieStore.set('session', '', {
     httpOnly: true,
@@ -12,6 +12,12 @@ export async function GET() {
     path: '/'
   })
 
+  // ✅ PERBAIKAN: Deteksi URL domain secara dinamis dari request
+  const url = new URL(request.url)
+  // url.origin akan otomatis menghasilkan 'https://webujianmasunggulan...vercel.app' 
+  // saat di Vercel, atau 'http://localhost:3000' saat di laptop.
+  const loginUrl = new URL('/login', url.origin)
+
   // Arahkan kembali ke halaman login
-  return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'))
+  return NextResponse.redirect(loginUrl)
 }
