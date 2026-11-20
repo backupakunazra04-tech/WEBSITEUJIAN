@@ -1427,6 +1427,7 @@ export const QuestionOptionScalarFieldEnum = {
   id: 'id',
   questionId: 'questionId',
   teks: 'teks',
+  gambarUrl: 'gambarUrl',
   isCorrect: 'isCorrect',
   urutan: 'urutan'
 } as const

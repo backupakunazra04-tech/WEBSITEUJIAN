@@ -38,6 +38,7 @@ export type QuestionOptionMinAggregateOutputType = {
   id: string | null
   questionId: string | null
   teks: string | null
+  gambarUrl: string | null
   isCorrect: boolean | null
   urutan: number | null
 }
@@ -46,6 +47,7 @@ export type QuestionOptionMaxAggregateOutputType = {
   id: string | null
   questionId: string | null
   teks: string | null
+  gambarUrl: string | null
   isCorrect: boolean | null
   urutan: number | null
 }
@@ -54,6 +56,7 @@ export type QuestionOptionCountAggregateOutputType = {
   id: number
   questionId: number
   teks: number
+  gambarUrl: number
   isCorrect: number
   urutan: number
   _all: number
@@ -72,6 +75,7 @@ export type QuestionOptionMinAggregateInputType = {
   id?: true
   questionId?: true
   teks?: true
+  gambarUrl?: true
   isCorrect?: true
   urutan?: true
 }
@@ -80,6 +84,7 @@ export type QuestionOptionMaxAggregateInputType = {
   id?: true
   questionId?: true
   teks?: true
+  gambarUrl?: true
   isCorrect?: true
   urutan?: true
 }
@@ -88,6 +93,7 @@ export type QuestionOptionCountAggregateInputType = {
   id?: true
   questionId?: true
   teks?: true
+  gambarUrl?: true
   isCorrect?: true
   urutan?: true
   _all?: true
@@ -183,6 +189,7 @@ export type QuestionOptionGroupByOutputType = {
   id: string
   questionId: string
   teks: string
+  gambarUrl: string | null
   isCorrect: boolean
   urutan: number
   _count: QuestionOptionCountAggregateOutputType | null
@@ -214,6 +221,7 @@ export type QuestionOptionWhereInput = {
   id?: Prisma.StringFilter<"QuestionOption"> | string
   questionId?: Prisma.StringFilter<"QuestionOption"> | string
   teks?: Prisma.StringFilter<"QuestionOption"> | string
+  gambarUrl?: Prisma.StringNullableFilter<"QuestionOption"> | string | null
   isCorrect?: Prisma.BoolFilter<"QuestionOption"> | boolean
   urutan?: Prisma.IntFilter<"QuestionOption"> | number
   question?: Prisma.XOR<Prisma.QuestionScalarRelationFilter, Prisma.QuestionWhereInput>
@@ -223,6 +231,7 @@ export type QuestionOptionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   teks?: Prisma.SortOrder
+  gambarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
   urutan?: Prisma.SortOrder
   question?: Prisma.QuestionOrderByWithRelationInput
@@ -235,6 +244,7 @@ export type QuestionOptionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.QuestionOptionWhereInput | Prisma.QuestionOptionWhereInput[]
   questionId?: Prisma.StringFilter<"QuestionOption"> | string
   teks?: Prisma.StringFilter<"QuestionOption"> | string
+  gambarUrl?: Prisma.StringNullableFilter<"QuestionOption"> | string | null
   isCorrect?: Prisma.BoolFilter<"QuestionOption"> | boolean
   urutan?: Prisma.IntFilter<"QuestionOption"> | number
   question?: Prisma.XOR<Prisma.QuestionScalarRelationFilter, Prisma.QuestionWhereInput>
@@ -244,6 +254,7 @@ export type QuestionOptionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   teks?: Prisma.SortOrder
+  gambarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
   urutan?: Prisma.SortOrder
   _count?: Prisma.QuestionOptionCountOrderByAggregateInput
@@ -260,6 +271,7 @@ export type QuestionOptionScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"QuestionOption"> | string
   questionId?: Prisma.StringWithAggregatesFilter<"QuestionOption"> | string
   teks?: Prisma.StringWithAggregatesFilter<"QuestionOption"> | string
+  gambarUrl?: Prisma.StringNullableWithAggregatesFilter<"QuestionOption"> | string | null
   isCorrect?: Prisma.BoolWithAggregatesFilter<"QuestionOption"> | boolean
   urutan?: Prisma.IntWithAggregatesFilter<"QuestionOption"> | number
 }
@@ -267,6 +279,7 @@ export type QuestionOptionScalarWhereWithAggregatesInput = {
 export type QuestionOptionCreateInput = {
   id?: string
   teks: string
+  gambarUrl?: string | null
   isCorrect?: boolean
   urutan?: number
   question: Prisma.QuestionCreateNestedOneWithoutOptionsInput
@@ -276,6 +289,7 @@ export type QuestionOptionUncheckedCreateInput = {
   id?: string
   questionId: string
   teks: string
+  gambarUrl?: string | null
   isCorrect?: boolean
   urutan?: number
 }
@@ -283,6 +297,7 @@ export type QuestionOptionUncheckedCreateInput = {
 export type QuestionOptionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   teks?: Prisma.StringFieldUpdateOperationsInput | string
+  gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   urutan?: Prisma.IntFieldUpdateOperationsInput | number
   question?: Prisma.QuestionUpdateOneRequiredWithoutOptionsNestedInput
@@ -292,6 +307,7 @@ export type QuestionOptionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   questionId?: Prisma.StringFieldUpdateOperationsInput | string
   teks?: Prisma.StringFieldUpdateOperationsInput | string
+  gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   urutan?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -300,6 +316,7 @@ export type QuestionOptionCreateManyInput = {
   id?: string
   questionId: string
   teks: string
+  gambarUrl?: string | null
   isCorrect?: boolean
   urutan?: number
 }
@@ -307,6 +324,7 @@ export type QuestionOptionCreateManyInput = {
 export type QuestionOptionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   teks?: Prisma.StringFieldUpdateOperationsInput | string
+  gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   urutan?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -315,6 +333,7 @@ export type QuestionOptionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   questionId?: Prisma.StringFieldUpdateOperationsInput | string
   teks?: Prisma.StringFieldUpdateOperationsInput | string
+  gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   urutan?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -333,6 +352,7 @@ export type QuestionOptionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   teks?: Prisma.SortOrder
+  gambarUrl?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
   urutan?: Prisma.SortOrder
 }
@@ -345,6 +365,7 @@ export type QuestionOptionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   teks?: Prisma.SortOrder
+  gambarUrl?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
   urutan?: Prisma.SortOrder
 }
@@ -353,6 +374,7 @@ export type QuestionOptionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   teks?: Prisma.SortOrder
+  gambarUrl?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
   urutan?: Prisma.SortOrder
 }
@@ -406,6 +428,7 @@ export type QuestionOptionUncheckedUpdateManyWithoutQuestionNestedInput = {
 export type QuestionOptionCreateWithoutQuestionInput = {
   id?: string
   teks: string
+  gambarUrl?: string | null
   isCorrect?: boolean
   urutan?: number
 }
@@ -413,6 +436,7 @@ export type QuestionOptionCreateWithoutQuestionInput = {
 export type QuestionOptionUncheckedCreateWithoutQuestionInput = {
   id?: string
   teks: string
+  gambarUrl?: string | null
   isCorrect?: boolean
   urutan?: number
 }
@@ -450,6 +474,7 @@ export type QuestionOptionScalarWhereInput = {
   id?: Prisma.StringFilter<"QuestionOption"> | string
   questionId?: Prisma.StringFilter<"QuestionOption"> | string
   teks?: Prisma.StringFilter<"QuestionOption"> | string
+  gambarUrl?: Prisma.StringNullableFilter<"QuestionOption"> | string | null
   isCorrect?: Prisma.BoolFilter<"QuestionOption"> | boolean
   urutan?: Prisma.IntFilter<"QuestionOption"> | number
 }
@@ -457,6 +482,7 @@ export type QuestionOptionScalarWhereInput = {
 export type QuestionOptionCreateManyQuestionInput = {
   id?: string
   teks: string
+  gambarUrl?: string | null
   isCorrect?: boolean
   urutan?: number
 }
@@ -464,6 +490,7 @@ export type QuestionOptionCreateManyQuestionInput = {
 export type QuestionOptionUpdateWithoutQuestionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   teks?: Prisma.StringFieldUpdateOperationsInput | string
+  gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   urutan?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -471,6 +498,7 @@ export type QuestionOptionUpdateWithoutQuestionInput = {
 export type QuestionOptionUncheckedUpdateWithoutQuestionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   teks?: Prisma.StringFieldUpdateOperationsInput | string
+  gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   urutan?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -478,6 +506,7 @@ export type QuestionOptionUncheckedUpdateWithoutQuestionInput = {
 export type QuestionOptionUncheckedUpdateManyWithoutQuestionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   teks?: Prisma.StringFieldUpdateOperationsInput | string
+  gambarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   urutan?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -488,6 +517,7 @@ export type QuestionOptionSelect<ExtArgs extends runtime.Types.Extensions.Intern
   id?: boolean
   questionId?: boolean
   teks?: boolean
+  gambarUrl?: boolean
   isCorrect?: boolean
   urutan?: boolean
   question?: boolean | Prisma.QuestionDefaultArgs<ExtArgs>
@@ -497,6 +527,7 @@ export type QuestionOptionSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   id?: boolean
   questionId?: boolean
   teks?: boolean
+  gambarUrl?: boolean
   isCorrect?: boolean
   urutan?: boolean
   question?: boolean | Prisma.QuestionDefaultArgs<ExtArgs>
@@ -506,6 +537,7 @@ export type QuestionOptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   id?: boolean
   questionId?: boolean
   teks?: boolean
+  gambarUrl?: boolean
   isCorrect?: boolean
   urutan?: boolean
   question?: boolean | Prisma.QuestionDefaultArgs<ExtArgs>
@@ -515,11 +547,12 @@ export type QuestionOptionSelectScalar = {
   id?: boolean
   questionId?: boolean
   teks?: boolean
+  gambarUrl?: boolean
   isCorrect?: boolean
   urutan?: boolean
 }
 
-export type QuestionOptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "questionId" | "teks" | "isCorrect" | "urutan", ExtArgs["result"]["questionOption"]>
+export type QuestionOptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "questionId" | "teks" | "gambarUrl" | "isCorrect" | "urutan", ExtArgs["result"]["questionOption"]>
 export type QuestionOptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   question?: boolean | Prisma.QuestionDefaultArgs<ExtArgs>
 }
@@ -539,6 +572,7 @@ export type $QuestionOptionPayload<ExtArgs extends runtime.Types.Extensions.Inte
     id: string
     questionId: string
     teks: string
+    gambarUrl: string | null
     isCorrect: boolean
     urutan: number
   }, ExtArgs["result"]["questionOption"]>
@@ -968,6 +1002,7 @@ export interface QuestionOptionFieldRefs {
   readonly id: Prisma.FieldRef<"QuestionOption", 'String'>
   readonly questionId: Prisma.FieldRef<"QuestionOption", 'String'>
   readonly teks: Prisma.FieldRef<"QuestionOption", 'String'>
+  readonly gambarUrl: Prisma.FieldRef<"QuestionOption", 'String'>
   readonly isCorrect: Prisma.FieldRef<"QuestionOption", 'Boolean'>
   readonly urutan: Prisma.FieldRef<"QuestionOption", 'Int'>
 }
