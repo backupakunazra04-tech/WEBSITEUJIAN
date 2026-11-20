@@ -38,7 +38,6 @@ function BuatSoalContent() {
   const [kunciEssay, setKunciEssay] = useState('') 
   const [poin, setPoin] = useState(1)
   
-  // Default 5 opsi untuk PG
   const [options, setOptions] = useState<Option[]>([
     { teks: '', isCorrect: false },
     { teks: '', isCorrect: false },
@@ -197,25 +196,25 @@ function BuatSoalContent() {
   }
 
   // ==========================================
-  // DOWNLOAD TEMPLATE EXCEL (CONTOH LENGKAP)
+  // DOWNLOAD TEMPLATE EXCEL
   // ==========================================
   const downloadTemplateExcel = () => {
     const panduanData = [
-      { Petunjuk: '1. Isi kolom "Tipe" dengan salah satu: PG, PG_MULTI, BENAR_SALAH, atau ESSAY.' },
-      { Petunjuk: '2. Untuk PG & PG_MULTI, isi Pilihan A-E. Kolom "Kunci PG" isi dengan huruf jawaban (contoh: A atau A,C).' },
-      { Petunjuk: '3. Untuk BENAR_SALAH, isi Pernyataan 1-4. Kolom "Kunci B/S" isi angka 1 (Benar) atau 0 (Salah), pisahkan koma (contoh: 1, 0, 1).' },
-      { Petunjuk: '4. Untuk ESSAY, isi Pertanyaan dan Poin. Kolom lain kosongkan.' },
+      { Petunjuk: '1. Isi kolom "Tipe" dengan: PG, PG_MULTI, BENAR_SALAH, atau ESSAY.' },
+      { Petunjuk: '2. Kolom "URL Gambar" diisi link gambar langsung (misal: https://i.imgur.com/abc.jpg). Boleh dikosongkan.' },
+      { Petunjuk: '3. Untuk PG & PG_MULTI, isi Pilihan A-E. Kolom "Kunci PG" isi dengan huruf jawaban (contoh: A atau A,C).' },
+      { Petunjuk: '4. Untuk BENAR_SALAH, isi Pernyataan 1-4. Kolom "Kunci B/S" isi angka 1 (Benar) atau 0 (Salah), pisahkan koma (contoh: 1, 0, 1).' },
       { Petunjuk: '5. Stimulus hanya wajib diisi untuk tipe BENAR_SALAH (teks bacaan).' }
     ]
     const wsPanduan = XLSX.utils.json_to_sheet(panduanData)
     wsPanduan['!cols'] = [{ wpx: 800 }]
 
-    // CONTOH UNTUK SETIAP TIPE SOAL
     const templateData = [
       {
         Tipe: 'PG',
         Stimulus: '',
         Pertanyaan: 'Siapakah presiden pertama Indonesia?',
+        'URL Gambar': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Soekarno.jpg/200px-Soekarno.jpg',
         'Pilihan A': 'Soekarno',
         'Pilihan B': 'Soeharto',
         'Pilihan C': 'B.J. Habibie',
@@ -233,6 +232,7 @@ function BuatSoalContent() {
         Tipe: 'PG_MULTI',
         Stimulus: '',
         Pertanyaan: 'Manakah yang termasuk hewan mamalia? (Pilih lebih dari satu)',
+        'URL Gambar': '',
         'Pilihan A': 'Kucing',
         'Pilihan B': 'Ayam',
         'Pilihan C': 'Anjing',
@@ -248,8 +248,9 @@ function BuatSoalContent() {
       },
       {
         Tipe: 'BENAR_SALAH',
-        Stimulus: 'Pada tanggal 17 Agustus 1945, Indonesia memproklamasikan kemerdekaannya. Teks proklamasi dibacakan oleh Ir. Soekarno didampingi Drs. Mohammad Hatta.',
+        Stimulus: 'Pada tanggal 17 Agustus 1945, Indonesia memproklamasikan kemerdekaannya.',
         Pertanyaan: 'Berdasarkan teks di atas, tentukan Benar atau Salah untuk setiap pernyataan berikut!',
+        'URL Gambar': '',
         'Pilihan A': '',
         'Pilihan B': '',
         'Pilihan C': '',
@@ -267,6 +268,7 @@ function BuatSoalContent() {
         Tipe: 'ESSAY',
         Stimulus: '',
         Pertanyaan: 'Jelaskan secara singkat proses terjadinya fotosintesis pada tumbuhan!',
+        'URL Gambar': '',
         'Pilihan A': '',
         'Pilihan B': '',
         'Pilihan C': '',
@@ -284,8 +286,8 @@ function BuatSoalContent() {
 
     const worksheet = XLSX.utils.json_to_sheet(templateData)
     worksheet['!cols'] = [
-      { wpx: 100 }, { wpx: 300 }, { wpx: 300 }, 
-      { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, // A - E
+      { wpx: 100 }, { wpx: 300 }, { wpx: 300 }, { wpx: 300 },
+      { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, { wpx: 120 }, { wpx: 120 },
       { wpx: 80 },
       { wpx: 250 }, { wpx: 250 }, { wpx: 250 }, { wpx: 250 }, { wpx: 100 },
       { wpx: 50 }
@@ -327,6 +329,8 @@ function BuatSoalContent() {
           const tipe = row['Tipe'] || 'PG'
           const stimulus = row['Stimulus'] || ''
           const teks = row['Pertanyaan']
+          const gambarUrlExcel = row['URL Gambar'] || ''
+          
           if (!teks) continue 
 
           const options = []
@@ -367,7 +371,7 @@ function BuatSoalContent() {
                 tipe,
                 stimulus,
                 teks,
-                gambarUrl: '', 
+                gambarUrl: gambarUrlExcel,
                 kunciEssay: '', 
                 poin: row['Poin'] || 1,
                 options
@@ -501,6 +505,19 @@ function BuatSoalContent() {
                     <ImageIcon size={16} className="absolute left-3 top-2.5 text-slate-400" />
                     <input type="url" value={gambarUrl} onChange={(e) => setGambarUrl(e.target.value)} className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm" placeholder="https://..." />
                   </div>
+                  {/* Preview Gambar Manual */}
+                  {gambarUrl && (
+                    <div className="mt-2 border border-slate-200 rounded-lg p-2 bg-slate-50 flex justify-center">
+                      <img 
+                        src={gambarUrl} 
+                        alt="Preview" 
+                        className="max-h-32 object-contain rounded" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Gambar+Rusak';
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Bobot Poin</label>
