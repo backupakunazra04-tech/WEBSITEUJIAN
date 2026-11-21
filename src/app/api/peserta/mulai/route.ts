@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { scheduleId, token, tanggalLahir } = body
 
-    // 1. Validasi Data Siswa (Gunakan select untuk efisiensi)
+    // 1. Validasi Data Siswa
     const user = await prisma.user.findUnique({ 
       where: { id: session.userId },
       select: { id: true, tanggalLahir: true }
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tanggal lahir tidak cocok' }, { status: 400 })
     }
 
-    // 2. Validasi Jadwal & Token (Gunakan select untuk efisiensi)
+    // 2. Validasi Jadwal & Token
     const schedule = await prisma.examSchedule.findUnique({
       where: { id: scheduleId },
       select: {
@@ -36,14 +36,14 @@ export async function POST(request: Request) {
             tipe: true,
             stimulus: true,
             teks: true,
-            gambarUrl: true,
+            gambarUrl: true, // Ambil gambar soal utama
             poin: true,
             options: {
               select: {
                 id: true,
                 teks: true,
-                gambarUrl: true,
-                isCorrect: true // Tetap diambil untuk penilaian, tapi tidak dikirim ke frontend
+                gambarUrl: true, // <-- PASTIKAN AMBIL GAMBAR PILIHAN
+                isCorrect: true
               }
             }
           }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ujian belum dimulai atau sudah berakhir' }, { status: 400 })
     }
 
-    // 3. Cek Status Keikutsertaan Siswa (Gunakan select untuk efisiensi)
+    // 3. Cek Status Keikutsertaan Siswa
     let participant = await prisma.examParticipant.findUnique({
       where: { userId_scheduleId: { userId: user.id, scheduleId } },
       select: { 
@@ -69,10 +69,7 @@ export async function POST(request: Request) {
         status: true, 
         seedAcak: true,
         answers: {
-          select: {
-            questionId: true,
-            jawaban: true
-          }
+          select: { questionId: true, jawaban: true }
         }
       }
     })
@@ -105,7 +102,7 @@ export async function POST(request: Request) {
     // 4. Acak Soal & Opsi Jawaban
     const shuffledQuestions = seededShuffle(schedule.questions, participant.seedAcak)
     
-    // 5. Sembunyikan kunci & Kirim data yang diperlukan
+    // 5. Sembunyikan kunci & Kirim data (TERMASUK GAMBAR)
     const safeQuestions = shuffledQuestions.map((q: any) => ({
       id: q.id,
       tipe: q.tipe,
@@ -116,7 +113,7 @@ export async function POST(request: Request) {
       options: seededShuffle(q.options, participant!.seedAcak + q.id).map((o: any) => ({
         id: o.id,
         teks: o.teks,
-        gambarUrl: o.gambarUrl
+        gambarUrl: o.gambarUrl // <-- PASTIKAN GAMBAR DIKIRIM KE FRONTEND
       }))
     }))
 

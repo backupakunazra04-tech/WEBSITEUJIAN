@@ -364,7 +364,6 @@ function UjianContent() {
   }
 
   // ================= RENDER UJIAN =================
-  // Hitung soal untuk halaman saat ini
   const totalPages = Math.ceil(questions.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const currentQuestions = questions.slice(startIndex, startIndex + itemsPerPage)
@@ -508,9 +507,12 @@ function UjianContent() {
                                 className="w-5 h-5 mt-1 accent-emerald-600"
                               />
                               <div className="flex-1">
-                                <span className="text-slate-700">{opt.teks}</span>
+                                {/* TAMPILKAN TEKS JIKA ADA */}
+                                {opt.teks && <span className="text-slate-700 block mb-2">{opt.teks}</span>}
+                                
+                                {/* GAMBAR PILIHAN PG/PG_MULTI */}
                                 {opt.gambarUrl && (
-                                  <img src={opt.gambarUrl} alt="Gambar Pilihan" className="mt-2 h-32 object-contain rounded border" />
+                                  <img src={opt.gambarUrl} alt="Gambar Pilihan" className="h-32 object-contain rounded border" />
                                 )}
                               </div>
                             </label>

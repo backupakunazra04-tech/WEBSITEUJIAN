@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   }
 }
 
-// 2. Tambah Soal Baru (Termasuk dari Import Excel)
+// 2. Tambah Soal Baru
 export async function POST(request: Request) {
   try {
     const session = await getSession()
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       data: {
         scheduleId,
         tipe,
-        stimulus: stimulus || null, // Menyimpan Stimulus (Teks Bacaan)
+        stimulus: stimulus || null,
         teks,
         gambarUrl: gambarUrl || null,
         kunciEssay: kunciEssay || null, 
@@ -63,7 +63,8 @@ export async function POST(request: Request) {
         urutan: countSoal + 1,
         options: {
           create: options?.map((opt: any) => ({
-            teks: opt.teks,
+            teks: opt.teks || '', // Boleh kosong
+            gambarUrl: opt.gambarUrl || null, // <-- Simpan URL Gambar ke Database
             isCorrect: opt.isCorrect
           })) || []
         }
@@ -118,26 +119,24 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'ID soal diperlukan' }, { status: 400 })
     }
 
-    // Gunakan transaksi untuk menghapus opsi lama dan membuat opsi baru
     const updatedQuestion = await prisma.$transaction(async (tx) => {
-      // Hapus opsi lama terkait soal ini
       await tx.questionOption.deleteMany({
         where: { questionId: id }
       })
 
-      // Update soal dan buat opsi baru
       return tx.question.update({
         where: { id },
         data: {
           tipe,
-          stimulus: stimulus || null, // Update stimulus
+          stimulus: stimulus || null, 
           teks,
           gambarUrl: gambarUrl || null,
           kunciEssay: kunciEssay || null,
           poin: parseInt(poin) || 1,
           options: {
             create: options?.map((opt: any) => ({
-              teks: opt.teks,
+              teks: opt.teks || '',
+              gambarUrl: opt.gambarUrl || null, // <-- Simpan URL Gambar ke Database
               isCorrect: opt.isCorrect
             })) || []
           }
